@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Icon from '@/components/ui/icon';
 import SendPayment from '@/components/SendPayment';
+import RegulatorDashboard from '@/components/RegulatorDashboard';
 
 const HERO_BG = 'https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/files/f06d5535-6d56-4b82-8a44-4fa83cef2352.jpg';
 
@@ -83,6 +84,22 @@ const Index = () => {
             </button>
           ))}
         </nav>
+
+        {/* Regulator nav entry */}
+        <div className="my-2 border-t border-border/40" />
+        <button
+          onClick={() => setActive('regulator')}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
+            active === 'regulator'
+              ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'
+              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border-transparent'
+          }`}
+        >
+          <Icon name="Eye" size={18} />
+          <span className="font-medium">Регулятор</span>
+          <span className="ml-auto text-[9px] mono px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 font-bold">GOLD</span>
+        </button>
+
         <div className="mt-auto glass rounded-xl p-4">
           <div className="flex items-center gap-2 text-xs mono neon-lime mb-1">
             <Icon name="Zap" size={14} /> SWARM АКТИВЕН
@@ -114,8 +131,11 @@ const Index = () => {
           {/* Send */}
           {active === 'send' && <SendPayment />}
 
+          {/* Regulator */}
+          {active === 'regulator' && <RegulatorDashboard />}
+
           {/* Home dashboard */}
-          {active !== 'send' && <>
+          {active !== 'send' && active !== 'regulator' && <>
 
           {/* Hero */}
           <section className="relative overflow-hidden rounded-3xl border border-primary/25 grid-noise animate-scale-in mb-6">
