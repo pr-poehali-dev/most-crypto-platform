@@ -7,6 +7,7 @@ import asyncio
 import random
 from typing import List, Optional
 
+import httpx
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
@@ -43,6 +44,37 @@ app.add_middleware(
 )
 
 blockchain_sim = BlockchainSimulator()
+
+RISK_ENGINE_URL = "http://risk-engine:8002"
+RISK_ENGINE_TIMEOUT = 5.0
+
+
+async def _aml_check(address: str, network: str) -> dict:
+    """
+    Вызывает Risk Engine для AML-проверки адреса получателя.
+    Возвращает dict с полями: risk_score, is_sanctioned, is_mixer, recommendation.
+    При недоступности сервиса — пропускает с recommendation=MANUAL_REVIEW.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=RISK_ENGINE_TIMEOUT) as client:
+            resp = await client.post(
+                f"{RISK_ENGINE_URL}/api/v1/risk/check",
+                json={"address": address, "network": network},
+            )
+            resp.raise_for_status()
+            return resp.json()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Risk Engine вернул ошибку: {exc.response.status_code}",
+        )
+    except httpx.RequestError:
+        return {
+            "risk_score": 0,
+            "is_sanctioned": False,
+            "is_mixer": False,
+            "recommendation": "MANUAL_REVIEW",
+        }
 
 
 # ===========================================================================
@@ -88,6 +120,8 @@ class PaymentStatus(BaseModel):
     total_agents: int
     completed_agents: int
     progress_percent: float
+    aml_risk_score: Optional[int] = None
+    aml_recommendation: Optional[str] = None
 
 
 # ===========================================================================
@@ -256,6 +290,24 @@ async def new_payment(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    # --- AML-проверка адреса получателя ------------------------------------
+    aml = await _aml_check(req.destination_address, req.from_currency)
+
+    if aml["recommendation"] == "REJECT":
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "AML_REJECTED",
+                "message": "Платёж отклонён системой AML-комплаенса",
+                "risk_score": aml["risk_score"],
+                "is_sanctioned": aml["is_sanctioned"],
+                "is_mixer": aml["is_mixer"],
+            },
+        )
+
+    # --- Создаём заказ и запускаем рой -------------------------------------
+    aml_status = "aml_pending" if aml["recommendation"] == "MANUAL_REVIEW" else "processing"
+
     order = PaymentOrder(
         user_id=user.id,
         from_currency=req.from_currency,
@@ -263,10 +315,24 @@ async def new_payment(
         amount=req.amount,
         destination_country=req.destination_country,
         destination_address=req.destination_address,
-        status="processing",
+        status=aml_status,
+        risk_score=aml["risk_score"],
     )
     db.add(order)
     await db.flush()
+
+    # При MANUAL_REVIEW рой не запускается — ждёт ручного одобрения
+    if aml["recommendation"] == "MANUAL_REVIEW":
+        await db.commit()
+        return PaymentStatus(
+            order_id=str(order.id),
+            status=aml_status,
+            total_agents=0,
+            completed_agents=0,
+            progress_percent=0.0,
+            aml_risk_score=aml["risk_score"],
+            aml_recommendation=aml["recommendation"],
+        )
 
     analysis = orchestrator.analyze_request(req)
     route = await orchestrator.deploy_swarm(order, analysis, db)
@@ -278,6 +344,8 @@ async def new_payment(
         total_agents=route.total_parts,
         completed_agents=0,
         progress_percent=0.0,
+        aml_risk_score=aml["risk_score"],
+        aml_recommendation=aml["recommendation"],
     )
 
 
