@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Empty body → 422",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 422,
+      "expectedBody": { "error": "Ошибка валидации" },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Bad email → 422",
+      "method": "POST",
+      "path": "/",
+      "body": { "email": "notanemail", "password": "Test1234!", "company_name": "ООО Тест", "inn": "7736123456", "legal_address": "Москва", "ceo_name": "Иванов И.И.", "phone": "+79001234567", "business_type": "import", "monthly_volume": "1M" },
+      "expectedStatus": 422,
+      "bodyMatcher": "partial",
+      "expectedBody": { "error": "Ошибка валидации" }
+    },
+    {
+      "name": "Bad INN → 422",
+      "method": "POST",
+      "path": "/",
+      "body": { "email": "test@test.com", "password": "Test1234!", "company_name": "ООО Тест", "inn": "123", "legal_address": "Москва", "ceo_name": "Иванов И.И.", "phone": "+79001234567", "business_type": "import", "monthly_volume": "1M" },
+      "expectedStatus": 422,
+      "bodyMatcher": "partial",
+      "expectedBody": { "error": "Ошибка валидации" }
+    }
+  ]
+}
