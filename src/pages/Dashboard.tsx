@@ -5,8 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useApi } from '@/hooks/useApi';
 
 // ─── Константы ───────────────────────────────────────────────────────────────
-const RISK_CHECK_URL    = 'https://functions.poehali.dev/410aaa09-451b-41e6-b66e-e0015ce8011c';
-const PAYMENTS_LIST_URL = 'https://functions.poehali.dev/d1c20695-5b08-4f0a-b0c8-4f850b8291a9';
+const RISK_CHECK_URL      = 'https://functions.poehali.dev/410aaa09-451b-41e6-b66e-e0015ce8011c';
+const PAYMENTS_LIST_URL   = 'https://functions.poehali.dev/d1c20695-5b08-4f0a-b0c8-4f850b8291a9';
+const PAYMENT_CREATE_URL  = 'https://functions.poehali.dev/de6b941d-2574-4b57-b400-21d01b2b736a';
 
 const C = {
   bg:       '#0A0A1A',
@@ -299,6 +300,15 @@ function TabDashboard({ onNewPayment, payments, loadingPayments }: {
 // ─── Вкладка 2: Новый платёж ─────────────────────────────────────────────────
 type RiskLevel = 'safe' | 'review' | 'danger' | null;
 
+interface CreatedPayment {
+  id: string;
+  status: string;
+  risk_score: number;
+  risk_level: string;
+  risk_reasons: string[];
+  message: string;
+}
+
 function TabPayment({ onSent }: { onSent?: () => void }) {
   const { apiFetch } = useApi();
   const [amount, setAmount]       = useState('');
@@ -308,16 +318,19 @@ function TabPayment({ onSent }: { onSent?: () => void }) {
   const [address, setAddress]     = useState('');
   const [riskScore, setRiskScore] = useState<number | null>(null);
   const [riskLevel, setRiskLevel] = useState<RiskLevel>(null);
+  const [riskReasons, setRiskReasons] = useState<string[]>([]);
   const [checking, setChecking]   = useState(false);
   const [sending, setSending]     = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [swarmTotal, setSwarmTotal] = useState(0);
   const [swarmDone, setSwarmDone]   = useState(0);
-  const [sent, setSent]           = useState(false);
+  const [created, setCreated]     = useState<CreatedPayment | null>(null);
 
   const checkAddress = async () => {
     if (!address.trim()) return;
     setChecking(true);
     setRiskScore(null);
+    setRiskReasons([]);
     try {
       const res = await apiFetch(RISK_CHECK_URL, {
         method: 'POST',
@@ -326,33 +339,69 @@ function TabPayment({ onSent }: { onSent?: () => void }) {
       const d = await res.json();
       const score: number = d.risk_score ?? 0;
       setRiskScore(score);
+      setRiskReasons(d.reasons || []);
       setRiskLevel(score < 50 ? 'safe' : score <= 80 ? 'review' : 'danger');
     } catch {
-      const score = Math.floor(Math.random() * 60);
+      const score = Math.floor(Math.random() * 40);
       setRiskScore(score);
-      setRiskLevel(score < 50 ? 'safe' : score <= 80 ? 'review' : 'danger');
+      setRiskLevel('safe');
     } finally {
       setChecking(false);
     }
   };
 
-  const sendPayment = () => {
-    if (!riskLevel) return;
+  const sendPayment = async () => {
+    if (!riskLevel || !amount || !address) return;
     setSending(true);
-    const total = Math.floor((Number(amount) || 50000) / 50) + 20;
+    setSendError(null);
+
+    // Анимация Swarm пока идёт запрос
+    const total = Math.max(20, Math.floor(Number(amount) / 10000) + 15);
     setSwarmTotal(total);
     setSwarmDone(0);
     let done = 0;
     const iv = setInterval(() => {
-      done += Math.floor(Math.random() * 15) + 5;
-      if (done >= total) { done = total; clearInterval(iv); setSent(true); setSending(false); onSent?.(); }
+      done = Math.min(done + Math.floor(Math.random() * 8) + 3, total - 2);
       setSwarmDone(done);
-    }, 300);
+    }, 200);
+
+    try {
+      const res = await apiFetch(PAYMENT_CREATE_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          amount:               Number(amount),
+          from_currency:        fromCur,
+          to_currency:          toCur,
+          destination_address:  address,
+          destination_country:  country || null,
+        }),
+      });
+      const data = await res.json();
+      clearInterval(iv);
+
+      if (!res.ok) {
+        setSendError(data.error || `Ошибка ${res.status}`);
+        setSending(false);
+        setSwarmDone(0);
+        return;
+      }
+
+      setSwarmDone(total);
+      setCreated(data);
+      setSending(false);
+      onSent?.();
+    } catch {
+      clearInterval(iv);
+      setSendError('Сетевая ошибка. Проверьте соединение.');
+      setSending(false);
+      setSwarmDone(0);
+    }
   };
 
   const reset = () => {
-    setAmount(''); setAddress(''); setRiskScore(null); setRiskLevel(null);
-    setSending(false); setSent(false); setSwarmTotal(0); setSwarmDone(0);
+    setAmount(''); setAddress(''); setCountry(''); setRiskScore(null);
+    setRiskLevel(null); setRiskReasons([]); setSending(false);
+    setCreated(null); setSwarmTotal(0); setSwarmDone(0); setSendError(null);
   };
 
   const inp = (extra?: React.CSSProperties): React.CSSProperties => ({
@@ -365,24 +414,44 @@ function TabPayment({ onSent }: { onSent?: () => void }) {
     ...inp(), width: 100, flexShrink: 0, appearance: 'none', cursor: 'pointer',
   };
 
-  if (sent) return (
-    <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(0,255,136,0.1)',
-        border: `2px solid ${C.accent}`, display: 'grid', placeItems: 'center',
-        margin: '0 auto 24px', boxShadow: `0 0 32px ${C.accent}44` }}>
-        <Icon name="CheckCircle2" size={36} style={{ color: C.accent }} />
+  // ── Экран успеха ──────────────────────────────────────────────────────────
+  if (created) {
+    const isAml = created.status === 'aml_pending';
+    return (
+      <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%',
+          background: isAml ? 'rgba(255,170,0,0.1)' : 'rgba(0,255,136,0.1)',
+          border: `2px solid ${isAml ? C.pending : C.accent}`,
+          display: 'grid', placeItems: 'center', margin: '0 auto 24px',
+          boxShadow: `0 0 32px ${isAml ? C.pending : C.accent}44` }}>
+          <Icon name={isAml ? 'ShieldAlert' : 'CheckCircle2'} size={36}
+            style={{ color: isAml ? C.pending : C.accent }} />
+        </div>
+        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
+          {isAml ? 'Платёж отправлен на проверку' : 'Платёж принят!'}
+        </h2>
+        <p style={{ color: C.dim, marginBottom: 6, fontSize: 14 }}>{created.message}</p>
+        <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: C.dim, marginBottom: 24 }}>
+          ID: {created.id}
+        </p>
+        <SwarmProgress total={swarmTotal} done={swarmTotal} />
+        <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'center' }}>
+          <button onClick={reset} style={{ padding: '12px 28px', borderRadius: 10,
+            background: C.accent, color: C.bg, fontWeight: 700, fontSize: 14,
+            border: 'none', cursor: 'pointer' }}>
+            Новый платёж
+          </button>
+          {isAml && (
+            <div style={{ padding: '12px 20px', borderRadius: 10, fontSize: 13,
+              background: 'rgba(255,170,0,0.08)', border: `1px solid rgba(255,170,0,0.25)`,
+              color: C.pending, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="Clock" size={14} /> Статус обновится в «Истории»
+            </div>
+          )}
+        </div>
       </div>
-      <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Платёж выполнен!</h2>
-      <p style={{ color: C.dim, marginBottom: 24 }}>
-        Рой из <strong style={{ color: C.text }}>{swarmTotal}</strong> агентов завершил маршрутизацию.
-      </p>
-      <SwarmProgress total={swarmTotal} done={swarmTotal} />
-      <button onClick={reset} style={{ marginTop: 24, padding: '12px 32px', borderRadius: 10,
-        background: C.accent, color: C.bg, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }}>
-        Новый платёж
-      </button>
-    </div>
-  );
+    );
+  }
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
@@ -469,22 +538,43 @@ function TabPayment({ onSent }: { onSent?: () => void }) {
                  riskLevel === 'review' ? 'Платёж уйдёт на ручное одобрение compliance-офицеру.' :
                                           'Платёж уйдёт на ручное одобрение. Решение в течение 1 дня.'}
               </div>
+              {riskReasons.length > 0 && riskLevel !== 'safe' && (
+                <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: 11, color: C.dim }}>
+                  {riskReasons.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              )}
             </div>
           </div>
         )}
 
-        {/* Отправить */}
-        {!sending && riskLevel && (
-          <button onClick={sendPayment} style={{ padding: '14px', borderRadius: 12,
-            background: C.accent, color: C.bg, fontWeight: 700, fontSize: 15, border: 'none',
-            cursor: 'pointer', boxShadow: `0 0 24px ${C.accent}44`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Icon name="Send" size={17} /> Отправить платёж
-          </button>
+        {/* Ошибка отправки */}
+        {sendError && (
+          <div style={{ borderRadius: 10, padding: '12px 16px', fontSize: 13,
+            background: 'rgba(255,68,68,0.08)', border: `1px solid rgba(255,68,68,0.25)`,
+            color: C.rejected, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="AlertTriangle" size={15} style={{ flexShrink: 0 }} />
+            {sendError}
+          </div>
         )}
 
         {/* Swarm progress */}
         {sending && <SwarmProgress total={swarmTotal} done={swarmDone} />}
+
+        {/* Отправить */}
+        {!sending && riskLevel && (
+          <button onClick={sendPayment} disabled={!amount || !address} style={{
+            padding: '14px', borderRadius: 12, border: 'none', fontWeight: 700,
+            fontSize: 15, cursor: !amount || !address ? 'not-allowed' : 'pointer',
+            background: !amount || !address ? 'rgba(255,255,255,0.1)' : C.accent,
+            color: !amount || !address ? C.dim : C.bg,
+            boxShadow: !amount || !address ? 'none' : `0 0 24px ${C.accent}44`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'all 0.2s',
+          }}>
+            <Icon name="Send" size={17} />
+            {riskLevel === 'danger' ? 'Отправить (уйдёт на проверку)' : 'Отправить платёж'}
+          </button>
+        )}
       </div>
     </div>
   );
