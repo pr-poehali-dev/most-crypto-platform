@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import { useAuth } from '@/context/AuthContext';
 
 // ─── Константы ───────────────────────────────────────────────────────────────
 const RISK_CHECK_URL = 'https://functions.poehali.dev/410aaa09-451b-41e6-b66e-e0015ce8011c';
@@ -862,8 +864,14 @@ function TabSettings() {
 // ─── Главный компонент ────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [tab, setTab] = useState<Tab>('dashboard');
-  const [user] = useState({ name: 'ООО ТрейдПро', email: 'cfo@company.ru', initials: 'ТП' });
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
 
+  const displayName = authUser?.company_name || authUser?.email?.split('@')[0] || 'Клиент';
+  const initials = displayName.slice(0, 2).toUpperCase();
+  const user = { name: displayName, email: authUser?.email || '', initials };
+
+  const handleLogout = useCallback(() => { logout(); navigate('/login', { replace: true }); }, [logout, navigate]);
   const handleRepeat = useCallback((_tx: typeof DEMO_TXS[0]) => setTab('payment'), []);
 
   const TITLES: Record<Tab, string> = {
@@ -931,7 +939,7 @@ export default function Dashboard() {
                 textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
             </div>
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%',
             padding: '9px 12px', borderRadius: 9, background: 'transparent',
             border: 'none', color: C.dim, fontSize: 13, cursor: 'pointer',
             fontFamily: "'Rubik', sans-serif", textAlign: 'left' }}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import { useAuth } from '@/context/AuthContext';
 
 const KYC_LIST_URL   = 'https://functions.poehali.dev/a78bff1e-7153-4cd3-9218-42d4d2a4126e';
 const KYC_REVIEW_URL = 'https://functions.poehali.dev/21910779-f26a-42bf-9426-2b0866291889';
@@ -475,6 +477,9 @@ function LoginGate({ onAuth }: { onAuth: (token: string) => void }) {
 
 // ─── Главная страница ─────────────────────────────────────────────────────────
 export default function Compliance() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const handleLogout = useCallback(() => { logout(); navigate('/login', { replace: true }); }, [logout, navigate]);
   const [token, setToken]       = useState(() => localStorage.getItem('compliance_token') || '');
   const [data, setData]         = useState<ListResponse | null>(null);
   const [loading, setLoading]   = useState(false);
@@ -557,7 +562,7 @@ export default function Compliance() {
             background: 'rgba(0,255,136,0.08)', border: `1px solid ${CARD_BOR}`,
             borderRadius: 20, fontFamily: 'JetBrains Mono, monospace' }}>COMPLIANCE</span>
         </div>
-        <button onClick={() => { localStorage.removeItem('compliance_token'); setToken(''); }}
+        <button onClick={() => { localStorage.removeItem('compliance_token'); setToken(''); handleLogout(); }}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none',
             border: 'none', color: dimText, cursor: 'pointer', fontSize: 13 }}>
           <Icon name="LogOut" size={15} /> Выйти
