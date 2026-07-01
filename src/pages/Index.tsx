@@ -171,7 +171,7 @@ const Index = () => {
 
               <svg viewBox="0 0 520 220" className="w-full h-auto">
                 <line x1="60" y1="110" x2="460" y2="110" stroke="hsl(var(--border))" strokeWidth="1" />
-                {[[210, 40], [300, 80], [250, 150], [360, 170]].map(([x, y], i) => (
+                {([[210, 40], [300, 80], [250, 150], [360, 170]] as [number, number][]).map(([x, y], i) => (
                   <g key={i}>
                     <path
                       d={`M60 110 Q ${x} ${y} 460 110`}
@@ -184,7 +184,7 @@ const Index = () => {
                     />
                   </g>
                 ))}
-                {[[210, 40], [300, 80], [250, 150], [360, 170]].map(([x, y], i) => (
+                {([[210, 40], [300, 80], [250, 150], [360, 170]] as [number, number][]).map(([x, y], i) => (
                   <circle key={i} cx={x} cy={y} r="6" fill="hsl(var(--neon-lime))" opacity="0.9">
                     <animate attributeName="r" values="5;8;5" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
                   </circle>
