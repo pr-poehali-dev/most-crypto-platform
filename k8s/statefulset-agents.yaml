@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: swarm-agent
+  namespace: most
+  labels:
+    app: swarm-agent
+    component: worker
+spec:
+  serviceName: swarm-agent-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: swarm-agent
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: swarm-agent
+        component: worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9090"
+    spec:
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: swarm-agent
+          image: registry.most.network/most/swarm-agent:latest
+          imagePullPolicy: Always
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: most-secrets
+                  key: REDIS_URL
+            - name: COORDINATOR_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: most-config
+                  key: COORDINATOR_URL
+            - name: AGENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: STREAM_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: most-config
+                  key: STREAM_KEY
+            - name: GROUP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: most-config
+                  key: GROUP_NAME
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "96Mi"
+            limits:
+              cpu: "400m"
+              memory: "256Mi"
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import redis; r=redis.from_url(__import__('os').environ['REDIS_URL']); r.ping()"]
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: registry-credentials
+
+---
+# Headless Service для StatefulSet (требуется k8s)
+apiVersion: v1
+kind: Service
+metadata:
+  name: swarm-agent-headless
+  namespace: most
+spec:
+  clusterIP: None
+  selector:
+    app: swarm-agent
+  ports:
+    - port: 9090
+      name: metrics
+
+---
+# KEDA ScaledObject — автомасштабирование по длине Redis Stream
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: swarm-agent-scaler
+  namespace: most
+spec:
+  scaleTargetRef:
+    name: swarm-agent
+    kind: StatefulSet
+    apiVersion: apps/v1
+  pollingInterval: 10
+  cooldownPeriod:  60
+  minReplicaCount: 3
+  maxReplicaCount: 50
+  triggers:
+    - type: redis-streams
+      metadata:
+        address: redis.most.svc.cluster.local:6379
+        stream: most:swarm:tasks
+        consumerGroup: swarm-agents
+        pendingEntriesCount: "50"
+        # При 50 pending-задач на реплику — добавляем новую
+        lagCount: "50"
+      authenticationRef:
+        name: keda-redis-auth
+
+---
+# TriggerAuthentication для KEDA (пароль Redis из Secret)
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-redis-auth
+  namespace: most
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: most-secrets
+      key: REDIS_PASSWORD

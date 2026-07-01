@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: most-config
+  namespace: most
+data:
+  ENV:              "production"
+  LOG_LEVEL:        "info"
+  RISK_ENGINE_URL:  "http://risk-engine:8002"
+  COORDINATOR_URL:  "http://swarm-coordinator:8001"
+  REGULATOR_URL:    "http://regulator-node:8003"
+  STREAM_KEY:       "most:swarm:tasks"
+  GROUP_NAME:       "swarm-agents"
+  CLAIM_IDLE_MS:    "30000"
+  MAX_RETRY_COUNT:  "3"
+  BATCH_SIZE:       "10"
+  PROMETHEUS_PORT:  "9090"

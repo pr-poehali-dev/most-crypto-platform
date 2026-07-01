@@ -1,0 +1,139 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: most-production
+    env:     production
+
+rule_files:
+  - "rules/alerts.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  # ── Prometheus self-monitoring ───────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ── Orchestrator ─────────────────────────────────────────────────────────
+  - job_name: orchestrator
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [most]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: orchestrator
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        regex: "true"
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        target_label: __metrics_path__
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+  # ── Swarm Coordinator ─────────────────────────────────────────────────────
+  - job_name: swarm-coordinator
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [most]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: swarm-coordinator
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        regex: "true"
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        target_label: __metrics_path__
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+  # ── Risk Engine ───────────────────────────────────────────────────────────
+  - job_name: risk-engine
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [most]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: risk-engine
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        regex: "true"
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        target_label: __metrics_path__
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+  # ── Swarm Agents ──────────────────────────────────────────────────────────
+  - job_name: swarm-agents
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [most]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: swarm-agent
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        regex: "true"
+        action: keep
+      - source_labels: [__address__]
+        action: replace
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:9090
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: agent_name
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  - job_name: redis
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  # ── Node exporter ─────────────────────────────────────────────────────────
+  - job_name: node
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/$1/proxy/metrics

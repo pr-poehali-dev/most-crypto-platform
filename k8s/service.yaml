@@ -1,0 +1,132 @@
+---
+# ── Orchestrator ─────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator
+  namespace: most
+  labels:
+    app: orchestrator
+spec:
+  type: ClusterIP
+  selector:
+    app: orchestrator
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+
+---
+# ── Swarm Coordinator ────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: swarm-coordinator
+  namespace: most
+  labels:
+    app: swarm-coordinator
+spec:
+  type: ClusterIP
+  selector:
+    app: swarm-coordinator
+  ports:
+    - name: http
+      port: 8001
+      targetPort: 8001
+      protocol: TCP
+
+---
+# ── Risk Engine ──────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-engine
+  namespace: most
+  labels:
+    app: risk-engine
+spec:
+  type: ClusterIP
+  selector:
+    app: risk-engine
+  ports:
+    - name: http
+      port: 8002
+      targetPort: 8002
+      protocol: TCP
+
+---
+# ── Regulator Node ───────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: regulator-node
+  namespace: most
+  labels:
+    app: regulator-node
+spec:
+  type: ClusterIP
+  selector:
+    app: regulator-node
+  ports:
+    - name: http
+      port: 8003
+      targetPort: 8003
+      protocol: TCP
+
+---
+# ── Frontend ─────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: most
+  labels:
+    app: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+---
+# ── Redis ────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: most
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+
+---
+# ── PostgreSQL ───────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: most
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
