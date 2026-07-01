@@ -2,9 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
+import { useApi } from '@/hooks/useApi';
 
 // ─── Константы ───────────────────────────────────────────────────────────────
-const RISK_CHECK_URL = 'https://functions.poehali.dev/410aaa09-451b-41e6-b66e-e0015ce8011c';
+const RISK_CHECK_URL    = 'https://functions.poehali.dev/410aaa09-451b-41e6-b66e-e0015ce8011c';
+const PAYMENTS_LIST_URL = 'https://functions.poehali.dev/d1c20695-5b08-4f0a-b0c8-4f850b8291a9';
 
 const C = {
   bg:       '#0A0A1A',
@@ -22,14 +24,20 @@ const C = {
 
 type Tab = 'dashboard' | 'payment' | 'history' | 'addresses' | 'kyc' | 'settings';
 
-// ─── Демо-данные ─────────────────────────────────────────────────────────────
-const DEMO_TXS = [
-  { id: 'TXN-8821', amount: 240000, currency: 'USDT', country: 'AE', status: 'completed', time: '14:32', hop: 6 },
-  { id: 'TXN-8820', amount: 1500000, currency: 'USDT', country: 'TR', status: 'pending',   time: '13:10', hop: 12 },
-  { id: 'TXN-8819', amount: 98000,  currency: 'USDC', country: 'DE', status: 'completed', time: '11:55', hop: 4 },
-  { id: 'TXN-8818', amount: 750000, currency: 'USDT', country: 'CN', status: 'aml_pending',time: '10:20', hop: 8 },
-  { id: 'TXN-8817', amount: 32000,  currency: 'BTC',  country: 'SG', status: 'rejected',  time: '09:05', hop: 0 },
-];
+// ─── Тип платежа из API ───────────────────────────────────────────────────────
+export interface Payment {
+  id: string;
+  amount: number;
+  from_currency: string;
+  to_currency: string;
+  destination_country: string | null;
+  destination_address: string;
+  status: string;
+  risk_score: number;
+  risk_level: string;
+  reject_reason: string | null;
+  created_at: string | null;
+}
 
 const CHART_DATA = [1.2, 2.1, 1.8, 3.4, 2.9, 3.2, 2.7, 4.1, 3.8, 3.2, 2.5, 3.0,
                    2.8, 3.5, 4.2, 3.9, 3.2, 4.8, 4.1, 3.6, 2.9, 3.4, 3.8, 3.2,
@@ -49,9 +57,6 @@ const DEMO_ADDRESSES = [
 ];
 
 // ─── Хелперы ─────────────────────────────────────────────────────────────────
-const fmtMoney = (n: number) =>
-  n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${(n/1_000).toFixed(0)}K` : `$${n}`;
-
 function StatusBadge({ status }: { status: string }) {
   const MAP: Record<string, [string, string]> = {
     completed:    [C.completed, 'rgba(0,255,136,0.12)'],
@@ -168,7 +173,19 @@ const NAV_ITEMS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 // ─── Вкладка 1: Дашборд ──────────────────────────────────────────────────────
-function TabDashboard({ onNewPayment }: { onNewPayment: () => void }) {
+function TabDashboard({ onNewPayment, payments, loadingPayments }: {
+  onNewPayment: () => void;
+  payments: Payment[];
+  loadingPayments: boolean;
+}) {
+  const todayTotal   = payments.reduce((s, p) => s + p.amount, 0);
+  const todayCount   = payments.length;
+  const todayVolume  = todayTotal >= 1_000_000
+    ? `$${(todayTotal / 1_000_000).toFixed(1)}M`
+    : `$${(todayTotal / 1_000).toFixed(0)}K`;
+
+  const recent = payments.slice(0, 5);
+
   return (
     <div>
       {/* Статистика */}
@@ -192,16 +209,24 @@ function TabDashboard({ onNewPayment }: { onNewPayment: () => void }) {
           </div>
         </div>
 
-        {/* За сегодня */}
+        {/* За сегодня — реальные данные */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
           <div style={{ fontSize: 11, color: C.dim, letterSpacing: '0.12em', marginBottom: 12,
-            fontFamily: 'JetBrains Mono, monospace' }}>ЗА СЕГОДНЯ</div>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, marginBottom: 4 }}>47</div>
-          <div style={{ fontSize: 13, color: C.dim, marginBottom: 12 }}>платежей на <strong style={{ color: C.text }}>$3.2M</strong></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-            <Icon name="Zap" size={13} style={{ color: C.accent }} />
-            <span style={{ color: C.dim }}>Средняя скорость: <strong style={{ color: C.text }}>12 сек</strong></span>
-          </div>
+            fontFamily: 'JetBrains Mono, monospace' }}>МОИ ПЛАТЕЖИ</div>
+          {loadingPayments ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.dim }}>
+              <Icon name="Loader" size={14} style={{ animation: 'spin 1s linear infinite' }} /> Загрузка...
+            </div>
+          ) : (
+            <>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, marginBottom: 4 }}>{todayCount}</div>
+              <div style={{ fontSize: 13, color: C.dim, marginBottom: 12 }}>платежей на <strong style={{ color: C.text }}>{todayVolume}</strong></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                <Icon name="Zap" size={13} style={{ color: C.accent }} />
+                <span style={{ color: C.dim }}>Средняя скорость: <strong style={{ color: C.text }}>12 сек</strong></span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -212,12 +237,12 @@ function TabDashboard({ onNewPayment }: { onNewPayment: () => void }) {
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600, marginBottom: 2 }}>Объём платежей</div>
             <div style={{ fontSize: 12, color: C.dim }}>последние 28 дней · $M</div>
           </div>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: C.accent }}>$3.2M</div>
+          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: C.accent }}>{todayVolume}</div>
         </div>
         <LineChart />
       </div>
 
-      {/* Таблица */}
+      {/* Таблица — реальные платежи */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ padding: '18px 24px', borderBottom: `1px solid ${C.border}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -230,24 +255,40 @@ function TabDashboard({ onNewPayment }: { onNewPayment: () => void }) {
             <Icon name="Plus" size={14} /> Новый платёж
           </button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 80px 80px 120px 90px',
+        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 120px 110px',
           gap: 8, padding: '10px 24px', fontSize: 11, color: C.dim,
           fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em', borderBottom: `1px solid ${C.border}` }}>
-          <span>ID</span><span>СУММА</span><span>СТРАНА</span><span>HOP</span><span>СТАТУС</span><span>ВРЕМЯ</span>
+          <span>ID</span><span>СУММА</span><span>СТРАНА</span><span>СТАТУС</span><span>ДАТА</span>
         </div>
-        {DEMO_TXS.map((tx, i) => (
-          <div key={tx.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 80px 80px 120px 90px',
+        {loadingPayments && (
+          <div style={{ padding: '30px 24px', textAlign: 'center', color: C.dim, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Icon name="Loader" size={15} style={{ animation: 'spin 1s linear infinite' }} /> Загружаем платежи...
+          </div>
+        )}
+        {!loadingPayments && recent.length === 0 && (
+          <div style={{ padding: '30px 24px', textAlign: 'center', color: C.dim }}>
+            Платежей пока нет. Создайте первый!
+          </div>
+        )}
+        {!loadingPayments && recent.map((tx, i) => (
+          <div key={tx.id} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 120px 110px',
             gap: 8, padding: '13px 24px', alignItems: 'center',
-            borderBottom: i < DEMO_TXS.length - 1 ? `1px solid ${C.border}` : 'none',
+            borderBottom: i < recent.length - 1 ? `1px solid ${C.border}` : 'none',
             transition: 'background 0.15s', cursor: 'default' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: C.accent }}>{tx.id}</span>
-            <span style={{ fontWeight: 600 }}>{tx.amount.toLocaleString()} <span style={{ color: C.dim, fontWeight: 400 }}>{tx.currency}</span></span>
-            <span style={{ fontSize: 13, color: C.dim }}>{tx.country}</span>
-            <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: C.dim }}>{tx.hop || '—'}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: C.accent,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {tx.id.slice(0, 8)}…
+            </span>
+            <span style={{ fontWeight: 600 }}>
+              {tx.amount.toLocaleString()} <span style={{ color: C.dim, fontWeight: 400 }}>{tx.to_currency}</span>
+            </span>
+            <span style={{ fontSize: 13, color: C.dim }}>{tx.destination_country || '—'}</span>
             <StatusBadge status={tx.status} />
-            <span style={{ fontSize: 12, color: C.dim }}>{tx.time}</span>
+            <span style={{ fontSize: 11, color: C.dim }}>
+              {tx.created_at ? new Date(tx.created_at).toLocaleDateString('ru') : '—'}
+            </span>
           </div>
         ))}
       </div>
@@ -258,7 +299,8 @@ function TabDashboard({ onNewPayment }: { onNewPayment: () => void }) {
 // ─── Вкладка 2: Новый платёж ─────────────────────────────────────────────────
 type RiskLevel = 'safe' | 'review' | 'danger' | null;
 
-function TabPayment() {
+function TabPayment({ onSent }: { onSent?: () => void }) {
+  const { apiFetch } = useApi();
   const [amount, setAmount]       = useState('');
   const [fromCur, setFromCur]     = useState('USD');
   const [toCur, setToCur]         = useState('USDT');
@@ -277,9 +319,8 @@ function TabPayment() {
     setChecking(true);
     setRiskScore(null);
     try {
-      const res = await fetch(RISK_CHECK_URL, {
+      const res = await apiFetch(RISK_CHECK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address, network: toCur }),
       });
       const d = await res.json();
@@ -304,7 +345,7 @@ function TabPayment() {
     let done = 0;
     const iv = setInterval(() => {
       done += Math.floor(Math.random() * 15) + 5;
-      if (done >= total) { done = total; clearInterval(iv); setSent(true); setSending(false); }
+      if (done >= total) { done = total; clearInterval(iv); setSent(true); setSending(false); onSent?.(); }
       setSwarmDone(done);
     }, 300);
   };
@@ -450,14 +491,18 @@ function TabPayment() {
 }
 
 // ─── Вкладка 3: История ──────────────────────────────────────────────────────
-function TabHistory({ onRepeat }: { onRepeat: (tx: typeof DEMO_TXS[0]) => void }) {
+function TabHistory({ onRepeat, payments, loadingPayments }: {
+  onRepeat: () => void;
+  payments: Payment[];
+  loadingPayments: boolean;
+}) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCountry, setFilterCountry] = useState('');
 
-  const filtered = DEMO_TXS.filter(tx =>
+  const filtered = payments.filter(tx =>
     (filterStatus === 'all' || tx.status === filterStatus) &&
-    (!filterCountry || tx.country === filterCountry)
+    (!filterCountry || tx.destination_country === filterCountry)
   );
 
   const HOPS = ['ETH→TON', 'TON→TRX', 'TRX→USDT', 'USDT→BSC', 'BSC→ARB', 'ARB→final'];
@@ -489,27 +534,37 @@ function TabHistory({ onRepeat }: { onRepeat: (tx: typeof DEMO_TXS[0]) => void }
       </div>
 
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden' }}>
-        {/* Заголовок */}
-        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 80px 80px 120px 150px',
+        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 80px 120px 150px',
           gap: 8, padding: '11px 24px', fontSize: 11, color: C.dim,
           fontFamily: 'JetBrains Mono, monospace', borderBottom: `1px solid ${C.border}` }}>
           <span>ID</span><span>СУММА</span><span>СТРАНА</span><span>ВАЛЮТА</span><span>СТАТУС</span><span>ДЕЙСТВИЯ</span>
         </div>
-        {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: C.dim }}>Нет платежей по выбранным фильтрам</div>
+
+        {loadingPayments && (
+          <div style={{ padding: '30px 24px', textAlign: 'center', color: C.dim, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Icon name="Loader" size={15} style={{ animation: 'spin 1s linear infinite' }} /> Загружаем историю...
+          </div>
         )}
-        {filtered.map((tx, i) => (
+        {!loadingPayments && filtered.length === 0 && (
+          <div style={{ padding: 40, textAlign: 'center', color: C.dim }}>
+            {payments.length === 0 ? 'Платежей пока нет' : 'Нет платежей по выбранным фильтрам'}
+          </div>
+        )}
+        {!loadingPayments && filtered.map((tx, i) => (
           <div key={tx.id}>
-            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 80px 80px 120px 150px',
+            <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 80px 120px 150px',
               gap: 8, padding: '13px 24px', alignItems: 'center',
               borderBottom: `1px solid ${C.border}`,
               transition: 'background 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: C.accent }}>{tx.id}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: C.accent,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {tx.id.slice(0, 8)}…
+              </span>
               <span style={{ fontWeight: 600 }}>{tx.amount.toLocaleString()}</span>
-              <span style={{ fontSize: 13, color: C.dim }}>{tx.country}</span>
-              <span style={{ fontSize: 12, color: C.dim }}>{tx.currency}</span>
+              <span style={{ fontSize: 13, color: C.dim }}>{tx.destination_country || '—'}</span>
+              <span style={{ fontSize: 12, color: C.dim }}>{tx.to_currency}</span>
               <StatusBadge status={tx.status} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setExpanded(expanded === tx.id ? null : tx.id)}
@@ -518,7 +573,7 @@ function TabHistory({ onRepeat }: { onRepeat: (tx: typeof DEMO_TXS[0]) => void }
                     color: C.text, cursor: 'pointer' }}>
                   {expanded === tx.id ? 'Скрыть' : 'Детали'}
                 </button>
-                <button onClick={() => onRepeat(tx)}
+                <button onClick={onRepeat}
                   style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7,
                     background: `${C.accent}14`, border: `1px solid ${C.accent}33`,
                     color: C.accent, cursor: 'pointer' }}>
@@ -533,17 +588,19 @@ function TabHistory({ onRepeat }: { onRepeat: (tx: typeof DEMO_TXS[0]) => void }
                 borderBottom: `1px solid ${C.border}` }}>
                 <div style={{ fontSize: 11, color: C.dim, letterSpacing: '0.1em',
                   fontFamily: 'JetBrains Mono, monospace', marginBottom: 12 }}>
-                  SWARM-МАРШРУТ · {tx.hop} HOP'ОВ
+                  SWARM-МАРШРУТ · риск-скор {tx.risk_score}
                 </div>
                 {tx.status === 'rejected' ? (
-                  <div style={{ fontSize: 13, color: C.rejected }}>Платёж отклонён — маршрут не построен</div>
+                  <div style={{ fontSize: 13, color: C.rejected }}>
+                    Платёж отклонён{tx.reject_reason ? `: ${tx.reject_reason}` : ''}
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: C.text, padding: '5px 12px',
                       background: 'rgba(0,255,136,0.12)', borderRadius: 6, border: `1px solid ${C.accent}44` }}>
-                      Источник
+                      {tx.from_currency}
                     </div>
-                    {HOPS.slice(0, tx.hop || 4).map((h, j) => (
+                    {HOPS.slice(0, 4).map((h, j) => (
                       <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Icon name="ChevronRight" size={14} style={{ color: C.dim }} />
                         <div style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6,
@@ -554,7 +611,7 @@ function TabHistory({ onRepeat }: { onRepeat: (tx: typeof DEMO_TXS[0]) => void }
                     <Icon name="ChevronRight" size={14} style={{ color: C.dim }} />
                     <div style={{ fontSize: 12, fontWeight: 600, color: C.accent, padding: '5px 12px',
                       background: 'rgba(0,255,136,0.12)', borderRadius: 6, border: `1px solid ${C.accent}44` }}>
-                      Получатель
+                      {tx.to_currency}
                     </div>
                   </div>
                 )}
@@ -569,6 +626,7 @@ function TabHistory({ onRepeat }: { onRepeat: (tx: typeof DEMO_TXS[0]) => void }
 
 // ─── Вкладка 4: Мои адреса ───────────────────────────────────────────────────
 function TabAddresses() {
+  const { apiFetch } = useApi();
   const [addresses, setAddresses] = useState(DEMO_ADDRESSES);
   const [adding, setAdding]       = useState(false);
   const [newAddr, setNewAddr]     = useState('');
@@ -580,8 +638,8 @@ function TabAddresses() {
     if (!newAddr.trim()) return;
     setChecking(true);
     try {
-      const res = await fetch(RISK_CHECK_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const res = await apiFetch(RISK_CHECK_URL, {
+        method: 'POST',
         body: JSON.stringify({ address: newAddr, network: 'USDT' }),
       });
       const d = await res.json();
@@ -872,7 +930,27 @@ export default function Dashboard() {
   const user = { name: displayName, email: authUser?.email || '', initials };
 
   const handleLogout = useCallback(() => { logout(); navigate('/login', { replace: true }); }, [logout, navigate]);
-  const handleRepeat = useCallback((_tx: typeof DEMO_TXS[0]) => setTab('payment'), []);
+  const handleRepeat = useCallback(() => setTab('payment'), []);
+
+  // ── Загрузка платежей с JWT ──────────────────────────────────────────────
+  const { apiFetch } = useApi();
+  const [payments, setPayments]           = useState<Payment[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+
+  const fetchPayments = useCallback(async () => {
+    setLoadingPayments(true);
+    try {
+      const res = await apiFetch(`${PAYMENTS_LIST_URL}?limit=50&sort=created_at&order=desc`);
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data.items || []);
+      }
+    } catch { /* сеть недоступна */ } finally {
+      setLoadingPayments(false);
+    }
+  }, [apiFetch]);
+
+  useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   const TITLES: Record<Tab, string> = {
     dashboard: 'Дашборд', payment: 'Новый платёж', history: 'История платежей',
@@ -970,9 +1048,21 @@ export default function Dashboard() {
 
         {/* Tab content */}
         <div style={{ padding: '28px 32px' }}>
-          {tab === 'dashboard' && <TabDashboard onNewPayment={() => setTab('payment')} />}
-          {tab === 'payment'   && <TabPayment />}
-          {tab === 'history'   && <TabHistory onRepeat={handleRepeat} />}
+          {tab === 'dashboard' && (
+            <TabDashboard
+              onNewPayment={() => setTab('payment')}
+              payments={payments}
+              loadingPayments={loadingPayments}
+            />
+          )}
+          {tab === 'payment'   && <TabPayment onSent={fetchPayments} />}
+          {tab === 'history'   && (
+            <TabHistory
+              onRepeat={handleRepeat}
+              payments={payments}
+              loadingPayments={loadingPayments}
+            />
+          )}
           {tab === 'addresses' && <TabAddresses />}
           {tab === 'kyc'       && <TabKYC />}
           {tab === 'settings'  && <TabSettings />}
