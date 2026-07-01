@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Icon from '@/components/ui/icon';
 import SendPayment from '@/components/SendPayment';
 import RegulatorDashboard from '@/components/RegulatorDashboard';
+import SwarmGlobe, { type SwarmStats } from '@/components/SwarmGlobe';
 
 const HERO_BG = 'https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/files/f06d5535-6d56-4b82-8a44-4fa83cef2352.jpg';
 
@@ -53,8 +54,13 @@ function StatusChip({ ok }: { ok: boolean }) {
   );
 }
 
+const NET_COLORS = ['#627EEA','#F3BA2F','#8247E5','#FF060A','#14F195','#08B5E5'];
+const NET_NAMES  = ['ETH','BSC','Polygon','Tron','Solana','Stellar'];
+
 const Index = () => {
   const [active, setActive] = useState('home');
+  const [swarmStats, setSwarmStats] = useState<SwarmStats>({ active: 55, completed: 0, pct: 0 });
+  const handleStats = useCallback((s: SwarmStats) => setSwarmStats(s), []);
 
   return (
     <div className="min-h-screen flex text-foreground">
@@ -137,29 +143,82 @@ const Index = () => {
           {/* Home dashboard */}
           {active !== 'send' && active !== 'regulator' && <>
 
-          {/* Hero */}
-          <section className="relative overflow-hidden rounded-3xl border border-primary/25 grid-noise animate-scale-in mb-6">
-            <img src={HERO_BG} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/30" />
-            <div className="relative p-7 sm:p-10">
-              <div className="text-xs mono neon-cyan tracking-widest mb-3 animate-fade-in">● МУЛЬТИСЕТЕВОЙ БАЛАНС</div>
-              <div className="flex flex-wrap items-end gap-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                <h1 className="font-display text-5xl sm:text-6xl font-bold tracking-tight text-glow">$184 920</h1>
-                <span className="mono text-sm neon-lime mb-2">+4.8% за 24ч</span>
+          {/* Hero — 3D Swarm Globe */}
+          <section className="relative overflow-hidden rounded-3xl border border-primary/20 animate-scale-in mb-6 bg-[#020812]" style={{ minHeight: 420 }}>
+
+            {/* Фоновая сетка */}
+            <div className="absolute inset-0 opacity-30"
+              style={{ backgroundImage: 'linear-gradient(hsl(220 30% 18% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(220 30% 18% / 0.5) 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
+
+            {/* Градиент — затемнение справа для читаемости текста слева */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#020812] via-[#020812]/60 to-transparent pointer-events-none z-10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#020812]/80 via-transparent to-transparent pointer-events-none z-10" />
+
+            {/* 3D Глобус — занимает весь блок, смещён вправо */}
+            <div className="absolute inset-0 flex items-center justify-end">
+              <div className="w-full sm:w-[65%] h-full">
+                <SwarmGlobe onStats={handleStats} className="w-full h-full" />
               </div>
-              <p className="text-muted-foreground mt-3 max-w-md animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                Единый счёт для отправки и приёма крипто-платежей в 20 сетях с интеллектуальной swarm-маршрутизацией.
-              </p>
-              <div className="flex flex-wrap gap-3 mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                <button onClick={() => setActive('send')} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold glow-cyan hover-scale">
-                  <Icon name="ArrowUpRight" size={18} /> Отправить
-                </button>
-                <button className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-secondary text-foreground font-semibold border border-border hover-scale">
-                  <Icon name="ArrowDownLeft" size={18} /> Получить
-                </button>
-                <button className="inline-flex items-center gap-2 px-5 py-3 rounded-xl glass text-foreground font-semibold hover-scale">
-                  <Icon name="Repeat" size={18} /> Обмен
-                </button>
+            </div>
+
+            {/* Контент слева поверх глобуса */}
+            <div className="relative z-20 p-7 sm:p-10 flex flex-col justify-between h-full" style={{ minHeight: 420 }}>
+              <div>
+                {/* Live badge */}
+                <div className="inline-flex items-center gap-2 text-[10px] mono neon-cyan tracking-widest mb-5 animate-fade-in">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--neon-cyan))] animate-pulse-glow" />
+                  SWARM · {swarmStats.active} АГЕНТОВ · {swarmStats.pct}% ВЫПОЛНЕНО
+                </div>
+
+                <h1 className="font-display text-5xl sm:text-6xl font-bold tracking-tight text-glow animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                  $184 920
+                </h1>
+                <div className="flex items-center gap-3 mt-1 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                  <span className="mono text-sm neon-lime">+4.8% за 24ч</span>
+                  <span className="text-xs text-muted-foreground">мультисетевой баланс</span>
+                </div>
+
+                <p className="text-muted-foreground mt-4 max-w-xs text-sm leading-relaxed animate-fade-in" style={{ animationDelay: '0.15s' }}>
+                  Платежи через 20 блокчейн-сетей. Swarm-рой разбивает перевод на сотни агентов — невидимо для внешнего мониторинга.
+                </p>
+
+                {/* Кнопки */}
+                <div className="flex flex-wrap gap-3 mt-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <button onClick={() => setActive('send')} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold glow-cyan hover-scale text-sm">
+                    <Icon name="ArrowUpRight" size={16} /> Отправить
+                  </button>
+                  <button className="inline-flex items-center gap-2 px-4 py-3 rounded-xl glass text-foreground font-semibold border border-border/50 hover-scale text-sm">
+                    <Icon name="ArrowDownLeft" size={16} /> Получить
+                  </button>
+                  <button onClick={() => setActive('regulator')} className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-yellow-400/30 text-yellow-400 font-semibold hover-scale text-sm bg-yellow-400/5">
+                    <Icon name="Eye" size={16} /> Регулятор
+                  </button>
+                </div>
+              </div>
+
+              {/* HUD пилюли снизу */}
+              <div className="mt-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                {/* Прогресс-бар роя */}
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-[10px] mono text-muted-foreground whitespace-nowrap">SWARM</span>
+                  <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-[hsl(var(--neon-lime))]"
+                      style={{ width: `${Math.max(swarmStats.pct, 4)}%`, transition: 'width 0.8s ease', boxShadow: '0 0 8px hsl(var(--neon-cyan))' }}
+                    />
+                  </div>
+                  <span className="text-[10px] mono neon-cyan tabular-nums">{swarmStats.completed.toLocaleString()} TX</span>
+                </div>
+
+                {/* Сетевые пилюли */}
+                <div className="flex flex-wrap gap-2">
+                  {NET_NAMES.map((name, i) => (
+                    <span key={name} className="inline-flex items-center gap-1.5 text-[10px] mono px-2.5 py-1 rounded-full border border-white/8 bg-white/4">
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse-glow" style={{ background: NET_COLORS[i] }} />
+                      {name}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
