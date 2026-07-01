@@ -1,387 +1,629 @@
-import { useState, useCallback } from 'react';
-import Icon from '@/components/ui/icon';
-import SendPayment from '@/components/SendPayment';
-import RegulatorDashboard from '@/components/RegulatorDashboard';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import SwarmGlobe, { type SwarmStats } from '@/components/SwarmGlobe';
+import Icon from '@/components/ui/icon';
 
-const HERO_BG = 'https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/files/f06d5535-6d56-4b82-8a44-4fa83cef2352.jpg';
+// ─── Константы ───────────────────────────────────────────────────────────────
+const ACCENT   = '#00FF88';
+const BG       = '#0A0A1A';
+const CARD_BOR = 'rgba(0,255,136,0.3)';
 
-const NAV = [
-  { id: 'home', label: 'Главная', icon: 'LayoutDashboard' },
-  { id: 'send', label: 'Отправить', icon: 'ArrowUpRight' },
-  { id: 'receive', label: 'Получить', icon: 'ArrowDownLeft' },
-  { id: 'history', label: 'История', icon: 'History' },
-  { id: 'wallets', label: 'Кошельки', icon: 'Wallet' },
-  { id: 'networks', label: 'Сети', icon: 'Network' },
-  { id: 'analytics', label: 'Аналитика', icon: 'BarChart3' },
-  { id: 'profile', label: 'Профиль', icon: 'UserRound' },
-];
+// ─── Стиль-хелперы ───────────────────────────────────────────────────────────
+const cardStyle: React.CSSProperties = {
+  background: 'rgba(0,255,136,0.04)',
+  border: `1px solid ${CARD_BOR}`,
+  borderRadius: 16,
+};
 
-const NETWORKS = [
-  { name: 'Ethereum', sym: 'ETH', color: '#8fadff', tps: 32, ok: true },
-  { name: 'BNB Chain', sym: 'BSC', color: '#f3ba2f', tps: 148, ok: true },
-  { name: 'Polygon', sym: 'MATIC', color: '#a06bff', tps: 210, ok: true },
-  { name: 'Tron', sym: 'TRX', color: '#ff3b3b', tps: 96, ok: true },
-  { name: 'Solana', sym: 'SOL', color: '#42fff0', tps: 2400, ok: true },
-  { name: 'Bitcoin', sym: 'BTC', color: '#ff9d3b', tps: 7, ok: true },
-  { name: 'Lightning', sym: 'LN', color: '#f7e35b', tps: 9000, ok: true },
-  { name: 'Stellar', sym: 'XLM', color: '#7ee0ff', tps: 1000, ok: true },
-  { name: 'TON', sym: 'TON', color: '#39a0ff', tps: 550, ok: true },
-  { name: 'Arbitrum', sym: 'ARB', color: '#39c6ff', tps: 340, ok: true },
-  { name: 'Optimism', sym: 'OP', color: '#ff5f6d', tps: 300, ok: false },
-  { name: 'Avalanche', sym: 'AVAX', color: '#ff5252', tps: 420, ok: true },
-];
+const accentText: React.CSSProperties = { color: ACCENT };
+const dimText: React.CSSProperties   = { color: 'rgba(255,255,255,0.55)' };
 
-const TX = [
-  { dir: 'out', title: 'Перевод в Solana', net: 'SOL', addr: '0x7a3f…9c2b', amount: '−1 240.00', usd: '$1 240', status: 'Подтверждено', parts: '6/6' },
-  { dir: 'in', title: 'Приём из Ethereum', net: 'ETH', addr: '0x1b8e…4f0a', amount: '+0.842', usd: '$2 980', status: 'Подтверждено', parts: '4/4' },
-  { dir: 'out', title: 'Swarm-маршрут → TON', net: 'TON', addr: 'EQ9d…7hK1', amount: '−980.50', usd: '$980', status: 'В пути', parts: '3/5' },
-  { dir: 'in', title: 'Приём из Lightning', net: 'LN', addr: 'lnbc…q4z', amount: '+0.015', usd: '$640', status: 'Подтверждено', parts: '1/1' },
-];
+// ─── Анимированный счётчик ───────────────────────────────────────────────────
+function Counter({ end, prefix = '', suffix = '', decimals = 0 }: {
+  end: number; prefix?: string; suffix?: string; decimals?: number;
+}) {
+  const [val, setVal] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
 
-const SECURITY = [
-  { icon: 'KeyRound', title: 'Мультиподпись', value: '3 из 5', note: 'Аппаратные ключи активны' },
-  { icon: 'Snowflake', title: 'Холодный кошелёк', value: '82%', note: 'Средств в холодном хранении' },
-  { icon: 'ShieldAlert', title: 'Риск-анализ', value: 'Low', note: 'Скоринг последней операции 12/100' },
-];
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !started.current) {
+        started.current = true;
+        const dur = 1800;
+        const start = performance.now();
+        const tick = (now: number) => {
+          const p = Math.min((now - start) / dur, 1);
+          const ease = 1 - Math.pow(1 - p, 3);
+          setVal(ease * end);
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+    }, { threshold: 0.2 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [end]);
 
-function StatusChip({ ok }: { ok: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs mono ${ok ? 'neon-lime' : 'text-destructive'}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-[hsl(var(--neon-lime))]' : 'bg-destructive'} ${ok ? 'animate-pulse-glow' : ''}`} />
-      {ok ? 'online' : 'degraded'}
+    <span ref={ref}>
+      {prefix}{val.toFixed(decimals)}{suffix}
     </span>
   );
 }
 
-const NET_COLORS = ['#627EEA','#F3BA2F','#8247E5','#FF060A','#14F195','#08B5E5'];
-const NET_NAMES  = ['ETH','BSC','Polygon','Tron','Solana','Stellar'];
+// ─── Видео-модалка ───────────────────────────────────────────────────────────
+function VideoModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(12px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-3xl rounded-2xl overflow-hidden"
+        style={{ border: `1px solid ${CARD_BOR}` }}
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}
+        >
+          <Icon name="X" size={16} />
+        </button>
+        <div style={{ aspectRatio: '16/9', background: '#0d0d1a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: `${ACCENT}22`, border: `2px solid ${ACCENT}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="Play" size={28} style={{ color: ACCENT, marginLeft: 4 }} />
+          </div>
+          <p style={{ ...dimText, fontSize: 14 }}>Видеодемо платформы MOST</p>
+          <p style={{ ...dimText, fontSize: 12 }}>3 минуты · Полный user flow</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-const Index = () => {
-  const [active, setActive] = useState('home');
+// ─── Данные ──────────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    n: '01',
+    icon: 'FilePlus',
+    title: 'Вы создаёте платёж',
+    desc: 'Укажите сумму, валюту и адрес получателя. MOST проверяет KYC/AML автоматически за секунды.',
+  },
+  {
+    n: '02',
+    icon: 'GitBranch',
+    title: 'MOST разбивает на 1000+ микротранзакций',
+    desc: 'Swarm-рой агентов маршрутизирует платёж через 20+ блокчейн-сетей параллельно. Снаружи — некоррелированный шум.',
+  },
+  {
+    n: '03',
+    icon: 'CheckCircle2',
+    title: 'Получатель видит обычный перевод',
+    desc: 'Деньги приходят за <30 секунд в удобной валюте. Без блокировок, без задержек, без объяснений банкам.',
+  },
+];
+
+const BENEFITS = [
+  {
+    icon: 'EyeOff',
+    title: 'Невидимость для Chainalysis',
+    desc: 'Внешний аналитик видит тысячи некоррелированных микротранзакций — паттерн неразличим на фоне рыночного шума.',
+  },
+  {
+    icon: 'Eye',
+    title: 'Прозрачность для регулятора',
+    desc: 'Золотая нода раскрывает ЦБ полный граф маршрута, tx_hash каждого агента и аудит-лог всех действий.',
+  },
+  {
+    icon: 'Network',
+    title: '20+ сетей одновременно',
+    desc: 'Ethereum, BSC, Tron, Solana, Bitcoin Lightning, Stellar, TON, Arbitrum, Polygon и ещё 11 сетей.',
+  },
+  {
+    icon: 'Zap',
+    title: 'Скорость < 30 секунд',
+    desc: 'Любая сумма — от $1K до $100M — доставляется за одинаковое время благодаря параллельной маршрутизации.',
+  },
+  {
+    icon: 'ShieldCheck',
+    title: 'AML/KYC встроен',
+    desc: 'Автоматическая проверка адресов по санкционным спискам OFAC/SDN. Compliance-офицер одобряет пограничные случаи.',
+  },
+  {
+    icon: 'KeyRound',
+    title: 'Безопасность MPC',
+    desc: 'Приватные ключи существуют только в момент подписания транзакции. Не хранятся нигде. Мультиподпись 3-из-5.',
+  },
+];
+
+const PLANS = [
+  {
+    name: 'Стартовый',
+    price: '0.5%',
+    priceNote: 'от суммы',
+    limit: 'до $1M / мес',
+    features: [
+      '20+ блокчейн-сетей',
+      'AML/KYC автоматический',
+      'Поддержка email 24/7',
+      'Документация API',
+      'Sandbox-среда',
+    ],
+    cta: 'Начать бесплатно',
+    highlight: false,
+  },
+  {
+    name: 'Бизнес',
+    price: '0.3%',
+    priceNote: 'от суммы',
+    limit: 'до $10M / мес',
+    features: [
+      'Всё из Стартового',
+      'Персональный менеджер',
+      'SLA 99.9%',
+      'Выделенный compliance',
+      'Webhook-уведомления',
+    ],
+    cta: 'Подключить',
+    highlight: true,
+  },
+  {
+    name: 'Enterprise',
+    price: '0.1%',
+    priceNote: 'от суммы',
+    limit: 'Без лимита',
+    features: [
+      'Всё из Бизнес',
+      'On-premise установка',
+      'Золотая регуляторная нода',
+      'Индивидуальный SLA',
+      'Аудит безопасности',
+    ],
+    cta: 'Обсудить условия',
+    highlight: false,
+  },
+];
+
+// ─── Главная страница ─────────────────────────────────────────────────────────
+export default function Index() {
   const [swarmStats, setSwarmStats] = useState<SwarmStats>({ active: 55, completed: 0, pct: 0 });
+  const [videoOpen, setVideoOpen]   = useState(false);
   const handleStats = useCallback((s: SwarmStats) => setSwarmStats(s), []);
 
   return (
-    <div className="min-h-screen flex text-foreground">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 shrink-0 glass sticky top-0 h-screen px-4 py-6 gap-2">
-        <div className="flex items-center gap-3 px-2 mb-8">
-          <div className="w-10 h-10 rounded-xl grid place-items-center bg-primary text-primary-foreground font-display font-bold text-lg glow-cyan">M</div>
-          <div>
-            <div className="font-display font-bold text-xl tracking-tight leading-none">MOST</div>
-            <div className="text-[10px] mono text-muted-foreground tracking-widest">SWARM NETWORK</div>
+    <div style={{ background: BG, color: '#fff', minHeight: '100vh', fontFamily: "'Rubik', sans-serif", overflowX: 'hidden' }}>
+      {videoOpen && <VideoModal onClose={() => setVideoOpen(false)} />}
+
+      {/* ── NAV ──────────────────────────────────────────────────────────────── */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        background: 'rgba(10,10,26,0.85)', backdropFilter: 'blur(14px)',
+        borderBottom: '1px solid rgba(0,255,136,0.12)',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: ACCENT, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, color: BG, fontFamily: "'Space Grotesk', sans-serif" }}>M</div>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em' }}>MOST</span>
+          </div>
+          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+            {['Как работает', 'Преимущества', 'Тарифы'].map(l => (
+              <a key={l} href={`#${l}`} style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+              >{l}</a>
+            ))}
+            <a href="/register" style={{
+              background: ACCENT, color: BG, padding: '8px 20px', borderRadius: 10,
+              fontWeight: 600, fontSize: 14, textDecoration: 'none', transition: 'opacity 0.2s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            >Подключить</a>
           </div>
         </div>
-        <nav className="flex flex-col gap-1">
-          {NAV.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => setActive(n.id)}
-              className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                active === n.id
-                  ? 'bg-primary/10 text-primary border border-primary/30'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
-              }`}
-            >
-              <Icon name={n.icon} size={18} />
-              <span className="font-medium">{n.label}</span>
-              {active === n.id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />}
-            </button>
-          ))}
-        </nav>
+      </nav>
 
-        {/* Regulator nav entry */}
-        <div className="my-2 border-t border-border/40" />
-        <button
-          onClick={() => setActive('regulator')}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all border ${
-            active === 'regulator'
-              ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border-transparent'
-          }`}
-        >
-          <Icon name="Eye" size={18} />
-          <span className="font-medium">Регулятор</span>
-          <span className="ml-auto text-[9px] mono px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 font-bold">GOLD</span>
-        </button>
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 1. HERO                                                               */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
 
-        <div className="mt-auto glass rounded-xl p-4">
-          <div className="flex items-center gap-2 text-xs mono neon-lime mb-1">
-            <Icon name="Zap" size={14} /> SWARM АКТИВЕН
-          </div>
-          <div className="text-xs text-muted-foreground">3 агента маршрутизируют платежи по 20 сетям</div>
-        </div>
-      </aside>
+        {/* Фоновая сетка */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.18,
+          backgroundImage: `linear-gradient(rgba(0,255,136,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.15) 1px, transparent 1px)`,
+          backgroundSize: '48px 48px',
+          pointerEvents: 'none',
+        }} />
 
-      {/* Main */}
-      <main className="flex-1 min-w-0">
-        {/* Top ticker */}
-        <div className="overflow-hidden border-b border-border/60 bg-background/40 backdrop-blur">
-          <div className="flex whitespace-nowrap animate-ticker py-2">
-            {[...NETWORKS, ...NETWORKS].map((n, i) => (
-              <span key={i} className="mx-6 text-xs mono text-muted-foreground">
-                <span style={{ color: n.color }}>●</span> {n.sym} <span className="text-foreground">{n.tps} tps</span>
+        {/* Радиальные glow */}
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 80% at 70% 50%, rgba(0,255,136,0.07) 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 40% 60% at 10% 30%, rgba(98,126,234,0.08) 0%, transparent 60%)`, pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center', width: '100%', paddingTop: 64, paddingBottom: 64 }}>
+
+          {/* Текст слева */}
+          <div style={{ animation: 'fadeUp 0.7s ease both' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(0,255,136,0.1)', border: `1px solid rgba(0,255,136,0.25)`, borderRadius: 24, padding: '6px 14px', marginBottom: 28 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT, boxShadow: `0 0 8px ${ACCENT}`, animation: 'pulse 2s infinite' }} />
+              <span style={{ fontSize: 11, letterSpacing: '0.18em', ...accentText, fontFamily: 'JetBrains Mono, monospace' }}>
+                {swarmStats.active} АГЕНТОВ · {swarmStats.completed.toLocaleString()} TX ВЫПОЛНЕНО
               </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-5 sm:p-8 max-w-[1200px] mx-auto">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-6">
-            <div className="w-9 h-9 rounded-lg grid place-items-center bg-primary text-primary-foreground font-display font-bold glow-cyan">M</div>
-            <span className="font-display font-bold text-lg">MOST</span>
-          </div>
-
-          {/* Send */}
-          {active === 'send' && <SendPayment />}
-
-          {/* Regulator */}
-          {active === 'regulator' && <RegulatorDashboard />}
-
-          {/* Home dashboard */}
-          {active !== 'send' && active !== 'regulator' && <>
-
-          {/* Hero — 3D Swarm Globe */}
-          <section className="relative overflow-hidden rounded-3xl border border-primary/20 animate-scale-in mb-6 bg-[#020812]" style={{ minHeight: 420 }}>
-
-            {/* Фоновая сетка */}
-            <div className="absolute inset-0 opacity-30"
-              style={{ backgroundImage: 'linear-gradient(hsl(220 30% 18% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(220 30% 18% / 0.5) 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
-
-            {/* Градиент — затемнение справа для читаемости текста слева */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#020812] via-[#020812]/60 to-transparent pointer-events-none z-10" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#020812]/80 via-transparent to-transparent pointer-events-none z-10" />
-
-            {/* 3D Глобус — занимает весь блок, смещён вправо */}
-            <div className="absolute inset-0 flex items-center justify-end">
-              <div className="w-full sm:w-[65%] h-full">
-                <SwarmGlobe onStats={handleStats} className="w-full h-full" />
-              </div>
             </div>
 
-            {/* Контент слева поверх глобуса */}
-            <div className="relative z-20 p-7 sm:p-10 flex flex-col justify-between h-full" style={{ minHeight: 420 }}>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(32px, 4.5vw, 58px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em', marginBottom: 24 }}>
+              Международные<br />
+              <span style={accentText}>платежи</span><br />
+              без блокировок
+            </h1>
+
+            <p style={{ fontSize: 17, lineHeight: 1.7, ...dimText, maxWidth: 480, marginBottom: 36 }}>
+              MOST разбивает ваш платёж на тысячи микротранзакций через <strong style={{ color: '#fff' }}>20+ блокчейн-сетей</strong>. Внешний наблюдатель видит шум. Ваш контрагент получает деньги за секунды.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 40 }}>
+              <a href="/register" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: ACCENT, color: BG, padding: '14px 28px', borderRadius: 12,
+                fontWeight: 700, fontSize: 15, textDecoration: 'none',
+                boxShadow: `0 0 24px rgba(0,255,136,0.35)`, transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 0 36px rgba(0,255,136,0.5)`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 24px rgba(0,255,136,0.35)`; }}
+              >
+                <Icon name="ArrowUpRight" size={18} /> Подключить платформу
+              </a>
+              <button
+                onClick={() => setVideoOpen(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'transparent', border: `1px solid rgba(255,255,255,0.2)`, color: '#fff',
+                  padding: '14px 28px', borderRadius: 12, fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                  transition: 'border-color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.background = 'rgba(0,255,136,0.06)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'transparent'; }}
+              >
+                <Icon name="Play" size={18} /> Посмотреть демо
+              </button>
+            </div>
+
+            {/* Счётчики */}
+            <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
               <div>
-                {/* Live badge */}
-                <div className="inline-flex items-center gap-2 text-[10px] mono neon-cyan tracking-widest mb-5 animate-fade-in">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--neon-cyan))] animate-pulse-glow" />
-                  SWARM · {swarmStats.active} АГЕНТОВ · {swarmStats.pct}% ВЫПОЛНЕНО
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, ...accentText }}>
+                  $<Counter end={2.4} decimals={1} />B
                 </div>
-
-                <h1 className="font-display text-5xl sm:text-6xl font-bold tracking-tight text-glow animate-fade-in" style={{ animationDelay: '0.05s' }}>
-                  $184 920
-                </h1>
-                <div className="flex items-center gap-3 mt-1 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                  <span className="mono text-sm neon-lime">+4.8% за 24ч</span>
-                  <span className="text-xs text-muted-foreground">мультисетевой баланс</span>
-                </div>
-
-                <p className="text-muted-foreground mt-4 max-w-xs text-sm leading-relaxed animate-fade-in" style={{ animationDelay: '0.15s' }}>
-                  Платежи через 20 блокчейн-сетей. Swarm-рой разбивает перевод на сотни агентов — невидимо для внешнего мониторинга.
-                </p>
-
-                {/* Кнопки */}
-                <div className="flex flex-wrap gap-3 mt-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                  <button onClick={() => setActive('send')} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold glow-cyan hover-scale text-sm">
-                    <Icon name="ArrowUpRight" size={16} /> Отправить
-                  </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-3 rounded-xl glass text-foreground font-semibold border border-border/50 hover-scale text-sm">
-                    <Icon name="ArrowDownLeft" size={16} /> Получить
-                  </button>
-                  <button onClick={() => setActive('regulator')} className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-yellow-400/30 text-yellow-400 font-semibold hover-scale text-sm bg-yellow-400/5">
-                    <Icon name="Eye" size={16} /> Регулятор
-                  </button>
-                </div>
+                <div style={{ fontSize: 12, ...dimText, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>ПРОВЕДЕНО</div>
               </div>
-
-              {/* HUD пилюли снизу */}
-              <div className="mt-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                {/* Прогресс-бар роя */}
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-[10px] mono text-muted-foreground whitespace-nowrap">SWARM</span>
-                  <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-[hsl(var(--neon-lime))]"
-                      style={{ width: `${Math.max(swarmStats.pct, 4)}%`, transition: 'width 0.8s ease', boxShadow: '0 0 8px hsl(var(--neon-cyan))' }}
-                    />
-                  </div>
-                  <span className="text-[10px] mono neon-cyan tabular-nums">{swarmStats.completed.toLocaleString()} TX</span>
+              <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.1)' }} />
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: '#fff' }}>
+                  <Counter end={18.5} decimals={1} />M
                 </div>
-
-                {/* Сетевые пилюли */}
-                <div className="flex flex-wrap gap-2">
-                  {NET_NAMES.map((name, i) => (
-                    <span key={name} className="inline-flex items-center gap-1.5 text-[10px] mono px-2.5 py-1 rounded-full border border-white/8 bg-white/4">
-                      <span className="w-1.5 h-1.5 rounded-full animate-pulse-glow" style={{ background: NET_COLORS[i] }} />
-                      {name}
-                    </span>
-                  ))}
+                <div style={{ fontSize: 12, ...dimText, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>ТРАНЗАКЦИЙ</div>
+              </div>
+              <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.1)' }} />
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: '#fff' }}>
+                  20+
                 </div>
+                <div style={{ fontSize: 12, ...dimText, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>СЕТЕЙ</div>
               </div>
             </div>
-          </section>
-
-          {/* Stat cards */}
-          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {[
-              { icon: 'Network', label: 'Активных сетей', value: '20', accent: 'neon-cyan' },
-              { icon: 'Boxes', label: 'Swarm-агентов', value: '3', accent: 'neon-lime' },
-              { icon: 'ArrowLeftRight', label: 'Транзакций 24ч', value: '1 284', accent: 'neon-cyan' },
-              { icon: 'Gauge', label: 'Средняя комиссия', value: '0.12%', accent: 'neon-lime' },
-            ].map((s, i) => (
-              <div key={s.label} className="glass rounded-2xl p-5 hover-scale animate-fade-in" style={{ animationDelay: `${0.1 * i}s` }}>
-                <div className="flex items-center justify-between mb-4">
-                  <Icon name={s.icon} size={20} className={s.accent} />
-                  <Icon name="TrendingUp" size={14} className="text-muted-foreground" />
-                </div>
-                <div className={`font-display text-2xl font-bold ${s.accent}`}>{s.value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
-              </div>
-            ))}
-          </section>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Swarm visualization */}
-            <section className="lg:col-span-2 glass rounded-2xl p-6 grid-noise relative overflow-hidden animate-fade-in">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Swarm-маршрутизация</h2>
-                  <p className="text-xs text-muted-foreground mono">платёж разбит на 5 частей · 3 в пути</p>
-                </div>
-                <span className="text-xs mono neon-lime flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--neon-lime))] animate-pulse-glow" /> LIVE
-                </span>
-              </div>
-
-              <svg viewBox="0 0 520 220" className="w-full h-auto">
-                <line x1="60" y1="110" x2="460" y2="110" stroke="hsl(var(--border))" strokeWidth="1" />
-                {([[210, 40], [300, 80], [250, 150], [360, 170]] as [number, number][]).map(([x, y], i) => (
-                  <g key={i}>
-                    <path
-                      d={`M60 110 Q ${x} ${y} 460 110`}
-                      fill="none"
-                      stroke="hsl(var(--neon-cyan))"
-                      strokeWidth="1.5"
-                      strokeDasharray="6 8"
-                      opacity={0.55}
-                      style={{ animation: `dash-flow ${1.6 + i * 0.4}s linear infinite` }}
-                    />
-                  </g>
-                ))}
-                {([[210, 40], [300, 80], [250, 150], [360, 170]] as [number, number][]).map(([x, y], i) => (
-                  <circle key={i} cx={x} cy={y} r="6" fill="hsl(var(--neon-lime))" opacity="0.9">
-                    <animate attributeName="r" values="5;8;5" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
-                  </circle>
-                ))}
-                <g>
-                  <circle cx="60" cy="110" r="16" fill="hsl(var(--primary))" />
-                  <text x="60" y="115" textAnchor="middle" fontSize="11" fontWeight="700" fill="hsl(var(--primary-foreground))">SRC</text>
-                </g>
-                <g>
-                  <circle cx="460" cy="110" r="16" fill="hsl(var(--accent))" />
-                  <text x="460" y="115" textAnchor="middle" fontSize="11" fontWeight="700" fill="hsl(var(--accent-foreground))">DST</text>
-                </g>
-              </svg>
-
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                {[
-                  { l: 'Всего частей', v: '5' },
-                  { l: 'Завершено', v: '3' },
-                  { l: 'ETA', v: '~42 сек' },
-                ].map((x) => (
-                  <div key={x.l} className="bg-secondary/50 rounded-xl p-3 text-center">
-                    <div className="font-display text-xl font-bold neon-cyan">{x.v}</div>
-                    <div className="text-[11px] text-muted-foreground">{x.l}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Security */}
-            <section className="glass rounded-2xl p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <h2 className="font-display text-lg font-semibold mb-1">Безопасность</h2>
-              <p className="text-xs text-muted-foreground mono mb-5">защита средств в реальном времени</p>
-              <div className="flex flex-col gap-3">
-                {SECURITY.map((s) => (
-                  <div key={s.title} className="flex items-start gap-3 p-3 rounded-xl bg-secondary/40 border border-border/60 hover-scale">
-                    <div className="w-9 h-9 rounded-lg grid place-items-center bg-primary/10 text-primary shrink-0">
-                      <Icon name={s.icon} size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{s.title}</span>
-                        <span className="mono text-xs neon-lime">{s.value}</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">{s.note}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* History */}
-            <section className="lg:col-span-2 glass rounded-2xl p-6 animate-fade-in">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="font-display text-lg font-semibold">История транзакций</h2>
-                <button className="text-xs mono neon-cyan hover:underline flex items-center gap-1">
-                  все <Icon name="ChevronRight" size={14} />
-                </button>
-              </div>
-              <div className="flex flex-col divide-y divide-border/50">
-                {TX.map((t, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3 hover:bg-secondary/30 -mx-2 px-2 rounded-lg transition-colors">
-                    <div className={`w-9 h-9 rounded-lg grid place-items-center shrink-0 ${t.dir === 'in' ? 'bg-[hsl(var(--neon-lime))]/10 neon-lime' : 'bg-primary/10 text-primary'}`}>
-                      <Icon name={t.dir === 'in' ? 'ArrowDownLeft' : 'ArrowUpRight'} size={18} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{t.title}</div>
-                      <div className="text-xs mono text-muted-foreground truncate">{t.addr} · {t.parts} частей</div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className={`mono text-sm font-semibold ${t.dir === 'in' ? 'neon-lime' : 'text-foreground'}`}>{t.amount}</div>
-                      <div className="text-[11px] text-muted-foreground">{t.usd}</div>
-                    </div>
-                    <span className={`hidden sm:inline text-[11px] mono px-2 py-1 rounded-md ${t.status === 'В пути' ? 'bg-primary/10 text-primary' : 'bg-[hsl(var(--neon-lime))]/10 neon-lime'}`}>
-                      {t.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Networks */}
-            <section className="glass rounded-2xl p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="font-display text-lg font-semibold">Сети</h2>
-                <span className="text-xs mono text-muted-foreground">20 активно</span>
-              </div>
-              <div className="flex flex-col gap-2.5 max-h-[320px] overflow-y-auto pr-1">
-                {NETWORKS.map((n) => (
-                  <div key={n.sym} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/40 transition-colors">
-                    <span className="w-7 h-7 rounded-full grid place-items-center text-[10px] mono font-bold shrink-0" style={{ background: `${n.color}22`, color: n.color }}>
-                      {n.sym.slice(0, 3)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{n.name}</div>
-                      <div className="text-[11px] mono text-muted-foreground">{n.tps} tps</div>
-                    </div>
-                    <StatusChip ok={n.ok} />
-                  </div>
-                ))}
-              </div>
-            </section>
           </div>
 
-          <footer className="mt-10 pb-6 text-center">
-            <div className="text-xs mono text-muted-foreground">MOST · SWARM PAYMENT NETWORK · 20 CHAINS · v0.1</div>
-          </footer>
-          </>}
+          {/* 3D Глобус справа */}
+          <div style={{ height: 520, position: 'relative', animation: 'fadeUp 0.9s ease 0.15s both' }}>
+            {/* Свечение под глобусом */}
+            <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
+            <SwarmGlobe onStats={handleStats} className="w-full h-full" />
+          </div>
         </div>
-      </main>
+
+        {/* Скролл-индикатор */}
+        <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, animation: 'bounce 2s ease-in-out infinite' }}>
+          <span style={{ fontSize: 10, letterSpacing: '0.15em', ...dimText }}>ПРОКРУТИТЬ</span>
+          <Icon name="ChevronDown" size={16} style={{ color: ACCENT }} />
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 2. КАК ЭТО РАБОТАЕТ                                                  */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <section id="Как работает" style={{ padding: '120px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 72 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.2em', ...accentText, fontFamily: 'JetBrains Mono, monospace', marginBottom: 16 }}>КАК ЭТО РАБОТАЕТ</div>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700, letterSpacing: '-0.02em' }}>
+              Три шага до получателя
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, position: 'relative' }}>
+            {/* Соединительная линия */}
+            <div style={{
+              position: 'absolute', top: 56, left: '20%', right: '20%', height: 1,
+              background: `linear-gradient(90deg, transparent, ${ACCENT}40, ${ACCENT}40, transparent)`,
+              pointerEvents: 'none',
+            }} />
+
+            {STEPS.map((s, i) => (
+              <div key={s.n} style={{ ...cardStyle, padding: 36, textAlign: 'center', position: 'relative' }}>
+                {/* Номер */}
+                <div style={{ position: 'absolute', top: -14, left: 24, background: BG, padding: '0 8px', fontSize: 11, fontFamily: 'JetBrains Mono, monospace', ...accentText }}>{s.n}</div>
+
+                {/* Иконка */}
+                <div style={{
+                  width: 64, height: 64, borderRadius: 18,
+                  background: 'rgba(0,255,136,0.1)', border: `1px solid ${CARD_BOR}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  boxShadow: i === 1 ? `0 0 24px rgba(0,255,136,0.25)` : 'none',
+                }}>
+                  <Icon name={s.icon} size={28} style={{ color: ACCENT }} />
+                </div>
+
+                <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 600, marginBottom: 12, lineHeight: 1.3 }}>{s.title}</h3>
+                <p style={{ ...dimText, fontSize: 14, lineHeight: 1.7 }}>{s.desc}</p>
+
+                {i === 1 && (
+                  <div style={{ marginTop: 20, display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {['ETH', 'SOL', 'TON', 'TRX', '+17'].map(n => (
+                      <span key={n} style={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace', background: 'rgba(0,255,136,0.1)', border: `1px solid rgba(0,255,136,0.2)`, borderRadius: 6, padding: '3px 8px', ...accentText }}>{n}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 3. ПРЕИМУЩЕСТВА                                                       */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <section id="Преимущества" style={{ padding: '0 24px 120px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 72 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.2em', ...accentText, fontFamily: 'JetBrains Mono, monospace', marginBottom: 16 }}>ПОЧЕМУ MOST</div>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700, letterSpacing: '-0.02em' }}>
+              Одновременно невидим<br />и прозрачен
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }}>
+            {BENEFITS.map((b, i) => (
+              <div
+                key={b.title}
+                style={{
+                  ...cardStyle,
+                  padding: '32px 36px',
+                  display: 'flex', gap: 24, alignItems: 'flex-start',
+                  transition: 'transform 0.25s, box-shadow 0.25s',
+                  cursor: 'default',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 8px 32px rgba(0,255,136,0.12)`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+              >
+                <div style={{
+                  width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+                  background: i < 2 ? 'rgba(0,255,136,0.12)' : 'rgba(0,255,136,0.06)',
+                  border: `1px solid ${CARD_BOR}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon name={b.icon} size={22} style={{ color: ACCENT }} />
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 17, fontWeight: 600, marginBottom: 8 }}>{b.title}</h3>
+                  <p style={{ ...dimText, fontSize: 14, lineHeight: 1.7 }}>{b.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 4. ТАРИФЫ                                                             */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <section id="Тарифы" style={{ padding: '0 24px 120px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 72 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.2em', ...accentText, fontFamily: 'JetBrains Mono, monospace', marginBottom: 16 }}>ТАРИФЫ</div>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 700, letterSpacing: '-0.02em' }}>
+              Прозрачные условия
+            </h2>
+            <p style={{ ...dimText, fontSize: 16, marginTop: 12 }}>Комиссия только от фактически переведённой суммы</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {PLANS.map((p) => (
+              <div
+                key={p.name}
+                style={{
+                  ...cardStyle,
+                  padding: '40px 32px',
+                  position: 'relative',
+                  border: p.highlight ? `1px solid ${ACCENT}` : `1px solid ${CARD_BOR}`,
+                  boxShadow: p.highlight ? `0 0 40px rgba(0,255,136,0.18)` : 'none',
+                  transition: 'transform 0.25s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-4px)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = '')}
+              >
+                {p.highlight && (
+                  <div style={{
+                    position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
+                    background: ACCENT, color: BG, fontSize: 11, fontWeight: 700,
+                    padding: '4px 16px', borderRadius: 20, whiteSpace: 'nowrap',
+                    letterSpacing: '0.08em',
+                  }}>ПОПУЛЯРНЫЙ</div>
+                )}
+
+                <div style={{ marginBottom: 8, fontSize: 13, ...dimText, letterSpacing: '0.1em', fontFamily: 'JetBrains Mono, monospace' }}>{p.name.toUpperCase()}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, ...accentText, lineHeight: 1 }}>{p.price}</span>
+                </div>
+                <div style={{ fontSize: 13, ...dimText, marginBottom: 6 }}>{p.priceNote}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 28, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'inline-block' }}>{p.limit}</div>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {p.features.map(f => (
+                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14 }}>
+                      <Icon name="Check" size={15} style={{ color: ACCENT, flexShrink: 0, marginTop: 2 }} />
+                      <span style={{ color: 'rgba(255,255,255,0.8)' }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a
+                  href="/register"
+                  style={{
+                    display: 'block', textAlign: 'center', padding: '13px 24px',
+                    borderRadius: 12, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+                    transition: 'transform 0.2s, opacity 0.2s',
+                    background: p.highlight ? ACCENT : 'transparent',
+                    color: p.highlight ? BG : '#fff',
+                    border: p.highlight ? 'none' : `1px solid rgba(255,255,255,0.25)`,
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                >{p.cta}</a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA-полоса ─────────────────────────────────────────────────────── */}
+      <section style={{ padding: '0 24px 120px' }}>
+        <div style={{
+          maxWidth: 900, margin: '0 auto',
+          background: `linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(98,126,234,0.08) 100%)`,
+          border: `1px solid ${CARD_BOR}`,
+          borderRadius: 24, padding: '64px 48px', textAlign: 'center',
+        }}>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(24px, 3vw, 38px)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16 }}>
+            Готовы к первому платежу?
+          </h2>
+          <p style={{ ...dimText, fontSize: 16, marginBottom: 36, maxWidth: 480, margin: '0 auto 36px' }}>
+            Подключитесь за 15 минут. Первый месяц — без комиссии на сумму до $500K.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/register" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: ACCENT, color: BG, padding: '14px 32px', borderRadius: 12,
+              fontWeight: 700, fontSize: 15, textDecoration: 'none',
+              boxShadow: `0 0 28px rgba(0,255,136,0.4)`,
+            }}>
+              <Icon name="ArrowUpRight" size={18} /> Подключить платформу
+            </a>
+            <a href="mailto:sales@most.network" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '14px 32px',
+              borderRadius: 12, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+            }}>
+              <Icon name="Mail" size={18} /> Написать в sales
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 5. ФУТЕР                                                              */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <footer style={{
+        borderTop: '1px solid rgba(0,255,136,0.12)',
+        padding: '48px 24px',
+        background: 'rgba(0,0,0,0.3)',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 48, marginBottom: 48 }}>
+            {/* Лого */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: ACCENT, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, color: BG, fontFamily: "'Space Grotesk', sans-serif" }}>M</div>
+                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20 }}>MOST</span>
+              </div>
+              <p style={{ ...dimText, fontSize: 13, lineHeight: 1.7, maxWidth: 260 }}>
+                Платформа трансграничных крипто-платежей с технологией swarm-маршрутизации.
+              </p>
+            </div>
+
+            {/* Ссылки */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
+              {[
+                {
+                  title: 'Платформа',
+                  links: ['О платформе', 'Как работает', 'Безопасность', 'Тарифы'],
+                },
+                {
+                  title: 'Разработчикам',
+                  links: ['Документация', 'API Reference', 'SDK', 'Sandbox'],
+                },
+                {
+                  title: 'Компания',
+                  links: ['Контакты', 'Политика KYC/AML', 'Условия использования', 'Пресс-кит'],
+                },
+              ].map(col => (
+                <div key={col.title}>
+                  <div style={{ fontSize: 11, letterSpacing: '0.15em', ...dimText, fontFamily: 'JetBrains Mono, monospace', marginBottom: 16 }}>{col.title.toUpperCase()}</div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {col.links.map(l => (
+                      <li key={l}>
+                        <a href="#" style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+                        >{l}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Нижняя строка */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ ...dimText, fontSize: 13 }}>MOST © 2026. Все права защищены.</span>
+            <span style={{
+              fontSize: 11, fontFamily: 'JetBrains Mono, monospace',
+              background: 'rgba(0,255,136,0.08)', border: `1px solid rgba(0,255,136,0.2)`,
+              borderRadius: 6, padding: '4px 12px', ...accentText,
+            }}>Лицензировано в рамках ЭПР ЦБ РФ №258-ФЗ</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* ── CSS анимации ─────────────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.4; }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50%       { transform: translateX(-50%) translateY(6px); }
+        }
+        @media (max-width: 900px) {
+          section > div > div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+          section > div > div[style*="grid-template-columns: repeat(3"] {
+            grid-template-columns: 1fr !important;
+          }
+          section > div > div[style*="grid-template-columns: repeat(2"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
-};
-
-export default Index;
+}
