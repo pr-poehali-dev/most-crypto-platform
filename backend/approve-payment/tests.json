@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Reject: no token",
+      "method": "POST",
+      "path": "/",
+      "body": { "order_id": "00000000-0000-0000-0000-000000000000", "action": "approve" },
+      "expectedStatus": 401,
+      "expectedBody": { "error": "Требуется авторизация" },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Reject: invalid action",
+      "method": "POST",
+      "path": "/",
+      "headers": { "Authorization": "Bearer invalid.token.here" },
+      "body": { "order_id": "00000000-0000-0000-0000-000000000000", "action": "unknown" },
+      "expectedStatus": 401,
+      "expectedBody": { "error": "Требуется авторизация" },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
