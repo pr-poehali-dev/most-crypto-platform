@@ -1,0 +1,44 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Clean address → APPROVE",
+      "method": "POST",
+      "path": "/",
+      "body": { "address": "0xAbCdEf1234567890abcdef1234567890abcdef12", "network": "ethereum" },
+      "expectedStatus": 200,
+      "expectedBody": { "address": "0xAbCdEf1234567890abcdef1234567890abcdef12" },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Sanctioned address → REJECT",
+      "method": "POST",
+      "path": "/",
+      "body": { "address": "0x8589427373d6d84e98730d7795d8f6f8731fda16", "network": "ethereum" },
+      "expectedStatus": 200,
+      "expectedBody": { "recommendation": "REJECT", "is_sanctioned": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Mixer keyword → high risk",
+      "method": "POST",
+      "path": "/",
+      "body": { "address": "tornado-cash-0x1234", "network": "ethereum" },
+      "expectedStatus": 200,
+      "expectedBody": { "is_mixer": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Empty address → 400",
+      "method": "POST",
+      "path": "/",
+      "body": { "address": "", "network": "ethereum" },
+      "expectedStatus": 400
+    }
+  ]
+}

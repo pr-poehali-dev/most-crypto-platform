@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Icon from '@/components/ui/icon';
+import SendPayment from '@/components/SendPayment';
 
 const HERO_BG = 'https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/files/f06d5535-6d56-4b82-8a44-4fa83cef2352.jpg';
 
@@ -110,6 +111,12 @@ const Index = () => {
             <span className="font-display font-bold text-lg">MOST</span>
           </div>
 
+          {/* Send */}
+          {active === 'send' && <SendPayment />}
+
+          {/* Home dashboard */}
+          {active !== 'send' && <>
+
           {/* Hero */}
           <section className="relative overflow-hidden rounded-3xl border border-primary/25 grid-noise animate-scale-in mb-6">
             <img src={HERO_BG} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
@@ -124,7 +131,7 @@ const Index = () => {
                 Единый счёт для отправки и приёма крипто-платежей в 20 сетях с интеллектуальной swarm-маршрутизацией.
               </p>
               <div className="flex flex-wrap gap-3 mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                <button className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold glow-cyan hover-scale">
+                <button onClick={() => setActive('send')} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold glow-cyan hover-scale">
                   <Icon name="ArrowUpRight" size={18} /> Отправить
                 </button>
                 <button className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-secondary text-foreground font-semibold border border-border hover-scale">
@@ -291,6 +298,7 @@ const Index = () => {
           <footer className="mt-10 pb-6 text-center">
             <div className="text-xs mono text-muted-foreground">MOST · SWARM PAYMENT NETWORK · 20 CHAINS · v0.1</div>
           </footer>
+          </>}
         </div>
       </main>
     </div>
