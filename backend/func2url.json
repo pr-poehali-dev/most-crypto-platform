@@ -1,4 +1,6 @@
 {
+  "kyc-list": "https://functions.poehali.dev/a78bff1e-7153-4cd3-9218-42d4d2a4126e",
+  "kyc-review": "https://functions.poehali.dev/21910779-f26a-42bf-9426-2b0866291889",
   "company-register": "https://functions.poehali.dev/87c9fc22-c382-433c-bec2-eb0103fd9189",
   "risk-check": "https://functions.poehali.dev/410aaa09-451b-41e6-b66e-e0015ce8011c",
   "pending-payments": "https://functions.poehali.dev/30cbda0e-a401-4771-99ae-9526937b05db",

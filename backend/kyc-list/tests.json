@@ -1,0 +1,7 @@
+{
+  "tests": [
+    {"name": "OPTIONS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200},
+    {"name": "No token → 401", "method": "GET", "path": "/", "expectedStatus": 401, "expectedBody": {"error": "Требуется авторизация"}, "bodyMatcher": "partial"},
+    {"name": "Bad token → 401", "method": "GET", "path": "/", "headers": {"Authorization": "Bearer bad.token"}, "expectedStatus": 401, "bodyMatcher": "partial", "expectedBody": {"error": "Требуется авторизация"}}
+  ]
+}
