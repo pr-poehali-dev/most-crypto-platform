@@ -3,6 +3,7 @@ import Icon from '@/components/ui/icon';
 
 const KYC_LIST_URL   = 'https://functions.poehali.dev/a78bff1e-7153-4cd3-9218-42d4d2a4126e';
 const KYC_REVIEW_URL = 'https://functions.poehali.dev/21910779-f26a-42bf-9426-2b0866291889';
+const KYC_NOTIFY_URL = 'https://functions.poehali.dev/b7cf34c9-30d3-4103-b36b-bce4bd64066e';
 
 const ACCENT   = '#00FF88';
 const BG       = '#0A0A1A';
@@ -126,12 +127,15 @@ function KycModal({ item, token, onClose, onDone }: {
 
   const isPending = item.status === 'pending_review';
 
+  const [notifyState, setNotifyState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+
   const submit = async () => {
     if (!action) return;
     if (action === 'reject' && !reason.trim()) { setErrMsg('Укажите причину отклонения'); return; }
     setState('loading');
     setErrMsg('');
     try {
+      // 1. Записываем решение
       const res = await fetch(KYC_REVIEW_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -139,8 +143,21 @@ function KycModal({ item, token, onClose, onDone }: {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
       setState('done');
-      setTimeout(() => { onClose(); onDone(); }, 1000);
+
+      // 2. Отправляем email-уведомление (fire-and-forget, не блокируем UI)
+      setNotifyState('sending');
+      fetch(KYC_NOTIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ kyc_id: item.id, action, reason: reason.trim() || undefined }),
+      })
+        .then(r => r.json())
+        .then(d => setNotifyState(d.sent ? 'sent' : 'failed'))
+        .catch(() => setNotifyState('failed'));
+
+      setTimeout(() => { onClose(); onDone(); }, 1800);
     } catch (e) {
       setState('error');
       setErrMsg(e instanceof Error ? e.message : 'Ошибка');
@@ -339,12 +356,35 @@ function KycModal({ item, token, onClose, onDone }: {
           )}
 
           {state === 'done' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px',
-              background: 'rgba(0,255,136,0.08)', border: `1px solid rgba(0,255,136,0.3)`, borderRadius: 12 }}>
-              <Icon name="CheckCircle2" size={20} style={{ color: ACCENT }} />
-              <span style={{ fontSize: 14, color: ACCENT, fontWeight: 600 }}>
-                {action === 'approve' ? 'Компания верифицирована!' : 'Заявка отклонена'}
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px',
+                background: 'rgba(0,255,136,0.08)', border: `1px solid rgba(0,255,136,0.3)`, borderRadius: 12 }}>
+                <Icon name="CheckCircle2" size={20} style={{ color: ACCENT }} />
+                <span style={{ fontSize: 14, color: ACCENT, fontWeight: 600 }}>
+                  {action === 'approve' ? 'Компания верифицирована!' : 'Заявка отклонена'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
+                background: notifyState === 'sent' ? 'rgba(0,255,136,0.05)'
+                          : notifyState === 'failed' ? 'rgba(255,68,68,0.05)'
+                          : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${notifyState === 'sent' ? 'rgba(0,255,136,0.2)'
+                                    : notifyState === 'failed' ? 'rgba(255,68,68,0.2)'
+                                    : 'rgba(255,255,255,0.08)'}`,
+                borderRadius: 10 }}>
+                {notifyState === 'sending' && <Icon name="Loader" size={15} style={{ color: 'rgba(255,255,255,0.4)', animation: 'spin 1s linear infinite' }} />}
+                {notifyState === 'sent'    && <Icon name="Mail" size={15} style={{ color: ACCENT }} />}
+                {notifyState === 'failed'  && <Icon name="MailX" size={15} style={{ color: '#ff8888' }} />}
+                {notifyState === 'idle'    && <Icon name="Mail" size={15} style={{ color: 'rgba(255,255,255,0.3)' }} />}
+                <span style={{ fontSize: 13, color: notifyState === 'sent' ? ACCENT
+                                                   : notifyState === 'failed' ? '#ff8888'
+                                                   : 'rgba(255,255,255,0.45)' }}>
+                  {notifyState === 'sending' ? 'Отправляем уведомление клиенту...'
+                  : notifyState === 'sent'   ? `Email отправлен: ${item.user_email}`
+                  : notifyState === 'failed' ? 'Уведомление не отправлено (проверьте SMTP_URL)'
+                  : 'Подготовка уведомления...'}
+                </span>
+              </div>
             </div>
           )}
         </div>

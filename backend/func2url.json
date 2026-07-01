@@ -1,4 +1,5 @@
 {
+  "kyc-notify": "https://functions.poehali.dev/b7cf34c9-30d3-4103-b36b-bce4bd64066e",
   "kyc-list": "https://functions.poehali.dev/a78bff1e-7153-4cd3-9218-42d4d2a4126e",
   "kyc-review": "https://functions.poehali.dev/21910779-f26a-42bf-9426-2b0866291889",
   "company-register": "https://functions.poehali.dev/87c9fc22-c382-433c-bec2-eb0103fd9189",
