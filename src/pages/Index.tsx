@@ -800,20 +800,19 @@ export default function Index() {
 
           {/* Текст слева */}
           <div style={{ animation: 'fadeUp 0.7s ease both' }}>
-            {/* Логотип без фона — только зелёное и белое */}
+            {/* Логотип — только зелёное и белое, без фона */}
             <img
               src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
               alt="MOST"
               style={{
-                height: 'clamp(80px, 10vw, 130px)',
+                height: 'clamp(90px, 11vw, 140px)',
                 width: 'auto',
                 display: 'block',
                 marginBottom: 20,
                 mixBlendMode: 'lighten',
-                filter: 'brightness(1.1) contrast(1.2)',
+                filter: 'brightness(1.15) contrast(1.15) saturate(1.1)',
               }}
             />
-
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(0,255,136,0.1)', border: `1px solid rgba(0,255,136,0.25)`, borderRadius: 24, padding: '6px 14px', marginBottom: 28 }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT, boxShadow: `0 0 8px ${ACCENT}`, animation: 'pulse 2s infinite' }} />
               <span style={{ fontSize: 11, letterSpacing: '0.18em', ...accentText, fontFamily: 'JetBrains Mono, monospace' }}>
@@ -883,31 +882,10 @@ export default function Index() {
             </div>
           </div>
 
-          {/* 3D Глобус справа + логотип над ним */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, animation: 'fadeUp 0.9s ease 0.15s both' }}>
-            {/* Логотип над глобусом — маска по краям */}
-            <img
-              src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
-              alt="MOST"
-              style={{
-                width: '100%',
-                maxWidth: 560,
-                height: 'auto',
-                objectFit: 'contain',
-                display: 'block',
-                marginBottom: -32,
-                position: 'relative',
-                zIndex: 2,
-                maskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, black 40%, transparent 100%)',
-                WebkitMaskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, black 40%, transparent 100%)',
-                filter: 'brightness(1.3) saturate(1.2) contrast(1.1)',
-              }}
-            />
-            {/* Глобус */}
-            <div style={{ height: 420, width: '100%', position: 'relative' }}>
-              <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
-              <SwarmGlobe onStats={handleStats} className="w-full h-full" />
-            </div>
+          {/* 3D Глобус справа */}
+          <div style={{ height: 520, position: 'relative', animation: 'fadeUp 0.9s ease 0.15s both' }}>
+            <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
+            <SwarmGlobe onStats={handleStats} className="w-full h-full" />
           </div>
         </div>
 
