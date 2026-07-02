@@ -807,13 +807,10 @@ export default function Index() {
               </span>
             </div>
 
-            <img
-              src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
-              alt="MOST"
-              style={{ height: 'clamp(120px, 14vw, 180px)', width: 'auto', objectFit: 'contain', display: 'block', marginBottom: 24, filter: 'brightness(1.3) contrast(1.05)' }}
-            />
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(20px, 2.8vw, 36px)', fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.02em', marginBottom: 24, color: 'rgba(255,255,255,0.75)' }}>
-              Международные <span style={accentText}>платежи</span> без блокировок
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(32px, 4.5vw, 58px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em', marginBottom: 24 }}>
+              Международные<br />
+              <span style={accentText}>платежи</span><br />
+              без блокировок
             </h1>
 
             <p style={{ fontSize: 17, lineHeight: 1.7, ...dimText, maxWidth: 480, marginBottom: 36 }}>
@@ -872,11 +869,26 @@ export default function Index() {
             </div>
           </div>
 
-          {/* 3D Глобус справа */}
+          {/* 3D Глобус справа + логотип поверх */}
           <div style={{ height: 520, position: 'relative', animation: 'fadeUp 0.9s ease 0.15s both' }}>
             {/* Свечение под глобусом */}
             <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
             <SwarmGlobe onStats={handleStats} className="w-full h-full" />
+            {/* Логотип поверх глобуса */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              <img
+                src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
+                alt="MOST"
+                style={{
+                  width: '90%',
+                  maxWidth: 480,
+                  height: 'auto',
+                  objectFit: 'contain',
+                  mixBlendMode: 'screen',
+                  filter: 'brightness(1.15) saturate(1.2)',
+                }}
+              />
+            </div>
           </div>
         </div>
 
