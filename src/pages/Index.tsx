@@ -546,8 +546,9 @@ function VideoModal({ onClose }: { onClose: () => void }) {
           {/* Финальный экран */}
           {showFinal && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-              <div style={{ width: 72, height: 72, borderRadius: 18, background: '#00FF88', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 36, color: '#040410', fontFamily: "'Space Grotesk', sans-serif", boxShadow: '0 0 60px rgba(0,255,136,0.5)', animation: 'mostPulse 2s ease-in-out infinite' }}>M</div>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', textAlign: 'center' }}>MOST</div>
+              <div style={{ animation: 'mostPulse 2s ease-in-out infinite', filter: 'drop-shadow(0 0 30px rgba(0,255,136,0.5))' }}>
+                <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 80, width: 'auto', objectFit: 'contain' }} />
+              </div>
               <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>Международные платежи без блокировок</div>
               <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
                 {['12 секунд', '20+ сетей', '0 следов'].map(t => (
@@ -751,10 +752,9 @@ export default function Index() {
         borderBottom: '1px solid rgba(0,255,136,0.12)',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: ACCENT, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, color: BG, fontFamily: "'Space Grotesk', sans-serif" }}>M</div>
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em' }}>MOST</span>
-          </div>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 40, width: 'auto', objectFit: 'contain', display: 'block' }} />
+          </a>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             {[
               { label: 'О платформе',  href: '/about'    },
@@ -1098,10 +1098,9 @@ export default function Index() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 48, marginBottom: 48 }}>
             {/* Лого */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: ACCENT, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, color: BG, fontFamily: "'Space Grotesk', sans-serif" }}>M</div>
-                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20 }}>MOST</span>
-              </div>
+              <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', marginBottom: 16 }}>
+                <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 36, width: 'auto', objectFit: 'contain', display: 'block' }} />
+              </a>
               <p style={{ ...dimText, fontSize: 13, lineHeight: 1.7, maxWidth: 260 }}>
                 Платформа трансграничных крипто-платежей с технологией swarm-маршрутизации.
               </p>

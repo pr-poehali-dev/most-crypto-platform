@@ -76,14 +76,8 @@ export default function Login() {
 
         {/* Логотип */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10,
-            textDecoration: 'none', marginBottom: 8 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: ACCENT,
-              display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 22,
-              color: BG, fontFamily: "'Space Grotesk', sans-serif",
-              boxShadow: `0 0 24px ${ACCENT}55` }}>M</div>
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700,
-              fontSize: 24, color: '#fff' }}>MOST</span>
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', marginBottom: 8 }}>
+            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 48, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 16px rgba(0,255,136,0.4))' }} />
           </a>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
             Платформа трансграничных крипто-платежей

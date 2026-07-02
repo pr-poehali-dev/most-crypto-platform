@@ -294,9 +294,8 @@ export default function Register() {
 
       {/* Nav */}
       <nav style={{ position: 'relative', zIndex: 10, padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 32, height: 32, borderRadius: 9, background: ACCENT, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 16, color: BG, fontFamily: "'Space Grotesk', sans-serif" }}>M</div>
-          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 18, color: '#fff' }}>MOST</span>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
         </a>
         <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
           Уже есть аккаунт? <a href="/login" style={{ color: ACCENT, textDecoration: 'none' }}>Войти</a>
