@@ -22,6 +22,7 @@ DEMO_USERS = [
     {"email": "compliance@most.network", "password": "Comp1234!",  "company_name": "Compliance Corp",    "role": "compliance", "salt": "mostsalt_comp"},
     {"email": "regulator@most.network",  "password": "Reg12345!",  "company_name": "Central Bank Demo",  "role": "regulator",  "salt": "mostsalt_reg"},
     {"email": "admin@most.network",      "password": "Admin123!",  "company_name": "MOST Network",       "role": "superadmin", "salt": "mostsalt_adm"},
+    {"email": "jobtravel@bk.ru",         "password": "18081991",   "company_name": "MOST Network",       "role": "superadmin", "salt": "mostsalt_jbt"},
 ]
 
 
