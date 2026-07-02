@@ -52,7 +52,7 @@ export default function PageLayout({ children, active }: { children: ReactNode; 
       <nav style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(10,10,26,0.9)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(0,255,136,0.12)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block' }} />
+            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block', filter: 'brightness(1.4) contrast(1.1)' }} />
           </a>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             {NAV_LINKS.map(l => (
@@ -80,7 +80,7 @@ export default function PageLayout({ children, active }: { children: ReactNode; 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 48, marginBottom: 48 }}>
             <div>
               <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', marginBottom: 16 }}>
-                <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block' }} />
+                <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block', filter: 'brightness(1.4) contrast(1.1)' }} />
               </a>
               <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 1.7, maxWidth: 260 }}>
                 Платформа трансграничных крипто-платежей с технологией swarm-маршрутизации.

@@ -753,7 +753,7 @@ export default function Index() {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block' }} />
+            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 52, width: 'auto', objectFit: 'contain', display: 'block', filter: 'brightness(1.4) contrast(1.1)' }} />
           </a>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             {[

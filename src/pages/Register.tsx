@@ -295,7 +295,7 @@ export default function Register() {
       {/* Nav */}
       <nav style={{ position: 'relative', zIndex: 10, padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 52, width: 'auto', objectFit: 'contain' }} />
+          <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 52, width: 'auto', objectFit: 'contain', filter: 'brightness(1.4) contrast(1.1)' }} />
         </a>
         <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
           Уже есть аккаунт? <a href="/login" style={{ color: ACCENT, textDecoration: 'none' }}>Войти</a>
