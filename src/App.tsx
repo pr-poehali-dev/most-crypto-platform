@@ -14,6 +14,17 @@ import Dashboard from "./pages/Dashboard";
 import ComplianceOfficer from "./pages/ComplianceOfficer";
 import RegulatorCabinet from "./pages/RegulatorCabinet";
 import AdminPanel from "./pages/AdminPanel";
+import About    from "./pages/About";
+import Pricing  from "./pages/Pricing";
+import Docs     from "./pages/Docs";
+import ApiRef   from "./pages/ApiRef";
+import Sdk      from "./pages/Sdk";
+import Sandbox  from "./pages/Sandbox";
+import Security from "./pages/Security";
+import Contacts from "./pages/Contacts";
+import KycAml   from "./pages/KycAml";
+import Terms    from "./pages/Terms";
+import Press    from "./pages/Press";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +66,19 @@ const App = () => (
                 <AdminPanel />
               </ProtectedRoute>
             } />
+
+            {/* ── Публичные информационные страницы ── */}
+            <Route path="/about"    element={<About    />} />
+            <Route path="/pricing"  element={<Pricing  />} />
+            <Route path="/docs"     element={<Docs     />} />
+            <Route path="/api-ref"  element={<ApiRef   />} />
+            <Route path="/sdk"      element={<Sdk      />} />
+            <Route path="/sandbox"  element={<Sandbox  />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/kyc-aml"  element={<KycAml   />} />
+            <Route path="/terms"    element={<Terms    />} />
+            <Route path="/press"    element={<Press    />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -755,12 +755,18 @@ export default function Index() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: ACCENT, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, color: BG, fontFamily: "'Space Grotesk', sans-serif" }}>M</div>
             <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em' }}>MOST</span>
           </div>
-          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-            {['Как работает', 'Преимущества', 'Тарифы'].map(l => (
-              <a key={l} href={`#${l}`} style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+            {[
+              { label: 'О платформе',  href: '/about'    },
+              { label: 'Как работает', href: '#how'       },
+              { label: 'Безопасность', href: '/security'  },
+              { label: 'Тарифы',       href: '/pricing'   },
+              { label: 'Документация', href: '/docs'      },
+            ].map(l => (
+              <a key={l.label} href={l.href} style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
-              >{l}</a>
+              >{l.label}</a>
             ))}
             <a href="/register" style={{
               background: ACCENT, color: BG, padding: '8px 20px', borderRadius: 10,
@@ -1106,26 +1112,41 @@ export default function Index() {
               {[
                 {
                   title: 'Платформа',
-                  links: ['О платформе', 'Как работает', 'Безопасность', 'Тарифы'],
+                  links: [
+                    { label: 'О платформе',  href: '/about'    },
+                    { label: 'Как работает', href: '#how'       },
+                    { label: 'Безопасность', href: '/security'  },
+                    { label: 'Тарифы',       href: '/pricing'   },
+                  ],
                 },
                 {
                   title: 'Разработчикам',
-                  links: ['Документация', 'API Reference', 'SDK', 'Sandbox'],
+                  links: [
+                    { label: 'Документация',  href: '/docs'    },
+                    { label: 'API Reference', href: '/api-ref' },
+                    { label: 'SDK',           href: '/sdk'     },
+                    { label: 'Sandbox',       href: '/sandbox' },
+                  ],
                 },
                 {
                   title: 'Компания',
-                  links: ['Контакты', 'Политика KYC/AML', 'Условия использования', 'Пресс-кит'],
+                  links: [
+                    { label: 'Контакты',              href: '/contacts' },
+                    { label: 'Политика KYC/AML',      href: '/kyc-aml'  },
+                    { label: 'Условия использования', href: '/terms'    },
+                    { label: 'Пресс-кит',             href: '/press'    },
+                  ],
                 },
               ].map(col => (
                 <div key={col.title}>
                   <div style={{ fontSize: 11, letterSpacing: '0.15em', ...dimText, fontFamily: 'JetBrains Mono, monospace', marginBottom: 16 }}>{col.title.toUpperCase()}</div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {col.links.map(l => (
-                      <li key={l}>
-                        <a href="#" style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+                      <li key={l.label}>
+                        <a href={l.href} style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
                           onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
                           onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
-                        >{l}</a>
+                        >{l.label}</a>
                       </li>
                     ))}
                   </ul>
