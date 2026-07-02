@@ -869,25 +869,28 @@ export default function Index() {
             </div>
           </div>
 
-          {/* 3D Глобус справа + логотип поверх */}
-          <div style={{ height: 520, position: 'relative', animation: 'fadeUp 0.9s ease 0.15s both' }}>
-            {/* Свечение под глобусом */}
-            <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
-            <SwarmGlobe onStats={handleStats} className="w-full h-full" />
-            {/* Логотип поверх глобуса */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <img
-                src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
-                alt="MOST"
-                style={{
-                  width: '90%',
-                  maxWidth: 480,
-                  height: 'auto',
-                  objectFit: 'contain',
-                  mixBlendMode: 'screen',
-                  filter: 'brightness(1.15) saturate(1.2)',
-                }}
-              />
+          {/* 3D Глобус справа + логотип над ним */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, animation: 'fadeUp 0.9s ease 0.15s both' }}>
+            {/* Логотип над глобусом */}
+            <img
+              src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
+              alt="MOST"
+              style={{
+                width: '100%',
+                maxWidth: 560,
+                height: 'auto',
+                objectFit: 'contain',
+                mixBlendMode: 'screen',
+                filter: 'brightness(1.2) saturate(1.2)',
+                marginBottom: -32,
+                position: 'relative',
+                zIndex: 2,
+              }}
+            />
+            {/* Глобус */}
+            <div style={{ height: 420, width: '100%', position: 'relative' }}>
+              <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
+              <SwarmGlobe onStats={handleStats} className="w-full h-full" />
             </div>
           </div>
         </div>
