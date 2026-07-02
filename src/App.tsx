@@ -24,7 +24,6 @@ import Security from "./pages/Security";
 import Contacts from "./pages/Contacts";
 import KycAml   from "./pages/KycAml";
 import Terms    from "./pages/Terms";
-import Press    from "./pages/Press";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,7 +77,6 @@ const App = () => (
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/kyc-aml"  element={<KycAml   />} />
             <Route path="/terms"    element={<Terms    />} />
-            <Route path="/press"    element={<Press    />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

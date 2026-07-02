@@ -65,11 +65,26 @@ def _verify_bcrypt(password: str, stored: str) -> bool:
         return False
 
 
+def _verify_sha256plain(password: str, stored: str) -> bool:
+    """sha256plain$salt$hash — упрощённый формат для демо-аккаунтов."""
+    try:
+        parts = stored.split("$")
+        if len(parts) != 3 or parts[0] != "sha256plain":
+            return False
+        _, salt, stored_hash = parts
+        candidate = hashlib.sha256((salt + password).encode()).hexdigest()
+        return candidate == stored_hash
+    except Exception:
+        return False
+
+
 def _verify_password(password: str, stored: str) -> bool:
     if stored.startswith("pbkdf2$"):
         return _verify_pbkdf2(password, stored)
     if stored.startswith("$2b$") or stored.startswith("$2a$"):
         return _verify_bcrypt(password, stored)
+    if stored.startswith("sha256plain$"):
+        return _verify_sha256plain(password, stored)
     return False
 
 

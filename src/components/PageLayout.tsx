@@ -34,7 +34,6 @@ const FOOTER_COLS = [
       { label: 'Контакты',               href: '/contacts' },
       { label: 'Политика KYC/AML',       href: '/kyc-aml'  },
       { label: 'Условия использования',  href: '/terms'    },
-      { label: 'Пресс-кит',              href: '/press'    },
     ],
   },
 ];

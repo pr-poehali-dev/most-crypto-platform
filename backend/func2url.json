@@ -1,4 +1,5 @@
 {
+  "seed-users": "https://functions.poehali.dev/e9164f0a-5730-4572-9f76-2aa0c5096f8e",
   "admin-api": "https://functions.poehali.dev/0d5d92bb-9238-4222-8d1c-cbafdf0a40b4",
   "regulator-api": "https://functions.poehali.dev/9d967023-b0c6-4778-a536-221013e6149c",
   "payment-create": "https://functions.poehali.dev/de6b941d-2574-4b57-b400-21d01b2b736a",
