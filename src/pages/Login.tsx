@@ -8,11 +8,15 @@ const BG     = '#0A0A1A';
 
 // Куда редиректить по роли после входа
 function roleDestination(role: AuthUser['role']): string {
-  if (role === 'compliance' || role === 'admin' || role === 'superadmin' || role === 'finance') {
-    return '/compliance';
+  switch (role) {
+    case 'superadmin': return '/admin';
+    case 'admin':      return '/admin';
+    case 'finance':    return '/admin';
+    case 'devops':     return '/admin';
+    case 'compliance': return '/compliance-officer';
+    case 'regulator':  return '/regulator';
+    default:           return '/dashboard';
   }
-  if (role === 'regulator') return '/regulator';
-  return '/dashboard'; // user, остальные
 }
 
 export default function Login() {

@@ -10,7 +10,7 @@ export interface AuthUser {
   email:        string;
   company_name: string | null;
   inn:          string | null;
-  role:         'superadmin' | 'admin' | 'finance' | 'compliance' | 'user' | 'regulator';
+  role:         'superadmin' | 'admin' | 'finance' | 'compliance' | 'devops' | 'user' | 'regulator';
   status:       'active' | 'pending_kyc' | 'blocked' | 'suspended';
 }
 

@@ -18,8 +18,16 @@ export default function ProtectedRoute({ children, roles }: Props) {
   }
 
   if (roles && user && !roles.includes(user.role)) {
-    const dest = user.role === 'user' ? '/dashboard' : '/compliance';
-    return <Navigate to={dest} replace />;
+    const ROLE_ROUTES: Record<string, string> = {
+      superadmin: '/admin',
+      admin:      '/admin',
+      finance:    '/admin',
+      devops:     '/admin',
+      compliance: '/compliance-officer',
+      regulator:  '/regulator',
+      user:       '/dashboard',
+    };
+    return <Navigate to={ROLE_ROUTES[user.role] ?? '/dashboard'} replace />;
   }
 
   return <>{children}</>;
