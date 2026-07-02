@@ -871,31 +871,24 @@ export default function Index() {
 
           {/* 3D Глобус справа + логотип над ним */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, animation: 'fadeUp 0.9s ease 0.15s both' }}>
-            {/* Логотип над глобусом — интегрированный в фон */}
-            <div style={{ position: 'relative', width: '100%', maxWidth: 560, marginBottom: -32, zIndex: 2 }}>
-              <img
-                src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
-                alt="MOST"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                  mixBlendMode: 'screen',
-                  filter: 'brightness(1.25) saturate(1.3) contrast(1.05)',
-                }}
-              />
-              {/* Маска — растворяем все 4 края в фон сайта */}
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: `
-                  linear-gradient(to right,  #0A0A1A 0%, transparent 18%, transparent 82%, #0A0A1A 100%),
-                  linear-gradient(to bottom, #0A0A1A 0%, transparent 15%, transparent 78%, #0A0A1A 100%)
-                `,
-                pointerEvents: 'none',
-              }} />
-            </div>
+            {/* Логотип над глобусом — маска по краям */}
+            <img
+              src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
+              alt="MOST"
+              style={{
+                width: '100%',
+                maxWidth: 560,
+                height: 'auto',
+                objectFit: 'contain',
+                display: 'block',
+                marginBottom: -32,
+                position: 'relative',
+                zIndex: 2,
+                maskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, black 40%, transparent 100%)',
+                WebkitMaskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, black 40%, transparent 100%)',
+                filter: 'brightness(1.3) saturate(1.2) contrast(1.1)',
+              }}
+            />
             {/* Глобус */}
             <div style={{ height: 420, width: '100%', position: 'relative' }}>
               <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', background: `radial-gradient(ellipse, rgba(0,255,136,0.12) 0%, transparent 70%)`, filter: 'blur(20px)', pointerEvents: 'none' }} />
