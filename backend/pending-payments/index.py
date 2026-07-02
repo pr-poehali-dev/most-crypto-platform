@@ -169,6 +169,100 @@ def get_audit(conn, qs: dict) -> dict:
     }
 
 
+def freeze_and_reject(conn, body: dict, caller: dict, ip) -> tuple:
+    """
+    Атомарная операция: заморозить аккаунт + отклонить платёж + записать в audit_log.
+    body: { order_id, user_id, reason, reject_all? }
+    """
+    order_id   = (body.get("order_id")  or "").strip()
+    user_id    = (body.get("user_id")   or "").strip()
+    reason     = (body.get("reason")    or "Подозрение на нарушение AML-политики").strip()
+    reject_all = bool(body.get("reject_all", False))
+
+    if not order_id or not user_id:
+        return {"error": "order_id и user_id обязательны"}, 400
+
+    conn.autocommit = False
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # 1. Проверяем платёж
+            cur.execute(
+                "SELECT id, status, user_id FROM payment_orders WHERE id = %s AND status = 'aml_pending'",
+                (order_id,),
+            )
+            order = cur.fetchone()
+            if not order:
+                conn.rollback()
+                return {"error": "Платёж не найден или уже обработан"}, 404
+
+            # 2. Проверяем пользователя
+            cur.execute("SELECT id, email FROM users WHERE id = %s::uuid", (user_id,))
+            user = cur.fetchone()
+            if not user:
+                conn.rollback()
+                return {"error": "Пользователь не найден"}, 404
+
+            now = datetime.now(timezone.utc)
+
+            # 3. Отклоняем текущий платёж
+            cur.execute(
+                """UPDATE payment_orders
+                      SET status='rejected', approved_by=%s::uuid, approved_at=%s,
+                          reject_reason=%s, updated_at=%s
+                    WHERE id=%s""",
+                (caller["sub"], now, reason, now, order_id),
+            )
+            rejected_count = 1
+
+            # 4. Если reject_all — отклоняем все aml_pending платежи этого пользователя
+            if reject_all:
+                cur.execute(
+                    """UPDATE payment_orders
+                          SET status='rejected', approved_by=%s::uuid, approved_at=%s,
+                              reject_reason=%s, updated_at=%s
+                        WHERE user_id=%s::uuid AND status='aml_pending' AND id != %s""",
+                    (caller["sub"], now, reason, now, user_id, order_id),
+                )
+                rejected_count += cur.rowcount
+
+            # 5. Замораживаем аккаунт
+            cur.execute(
+                "UPDATE users SET status='blocked', updated_at=%s WHERE id=%s::uuid",
+                (now, user_id),
+            )
+
+            # 6. Audit log — одна запись с полным контекстом
+            audit_details = {
+                "order_id":         order_id,
+                "target_user_id":   user_id,
+                "target_email":     user["email"],
+                "reason":           reason,
+                "reject_all":       reject_all,
+                "rejected_count":   rejected_count,
+                "action_type":      "freeze_and_reject",
+            }
+            cur.execute(
+                "INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES (%s::uuid, %s, %s, %s)",
+                (caller["sub"], "incident.freeze_and_reject", json.dumps(audit_details), ip),
+            )
+
+        conn.commit()
+        conn.autocommit = True
+        return {
+            "order_id":       order_id,
+            "user_id":        user_id,
+            "user_email":     user["email"],
+            "rejected_count": rejected_count,
+            "user_status":    "blocked",
+            "order_status":   "rejected",
+        }, 200
+
+    except Exception as exc:
+        conn.rollback()
+        conn.autocommit = True
+        return {"error": f"Ошибка транзакции: {str(exc)}"}, 500
+
+
 def post_action(conn, body: dict, caller: dict, ip) -> tuple:
     resource = (body.get("resource") or "").strip()
     user_id  = (body.get("user_id")  or "").strip()
@@ -224,6 +318,10 @@ def handler(event: dict, context) -> dict:
             except json.JSONDecodeError:
                 return _resp(400, {"error": "Невалидный JSON"})
             ip = (event.get("requestContext") or {}).get("identity", {}).get("sourceIp")
+            # Атомарный инцидент-эндпоинт
+            if (body.get("resource") or "").strip() == "freeze_and_reject":
+                result, code = freeze_and_reject(conn, body, caller, ip)
+                return _resp(code, result)
             result, code = post_action(conn, body, caller, ip)
             return _resp(code, result)
         return _resp(405, {"error": "Method not allowed"})

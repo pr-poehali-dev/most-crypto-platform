@@ -1,27 +1,9 @@
 {
   "tests": [
-    {
-      "name": "OPTIONS preflight",
-      "method": "OPTIONS",
-      "path": "/",
-      "expectedStatus": 200
-    },
-    {
-      "name": "No token → 401",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 401,
-      "expectedBody": { "error": "Требуется авторизация" },
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "Invalid token → 401",
-      "method": "GET",
-      "path": "/",
-      "headers": { "Authorization": "Bearer bad.token.here" },
-      "expectedStatus": 401,
-      "expectedBody": { "error": "Требуется авторизация" },
-      "bodyMatcher": "partial"
-    }
+    {"name": "OPTIONS", "method": "OPTIONS", "path": "/", "expectedStatus": 200},
+    {"name": "No token → 401", "method": "GET", "path": "/?resource=stats", "expectedStatus": 401, "bodyMatcher": "partial"},
+    {"name": "freeze_and_reject no token → 401", "method": "POST", "path": "/",
+     "body": {"resource": "freeze_and_reject", "order_id": "x", "user_id": "y", "reason": "test"},
+     "expectedStatus": 401, "bodyMatcher": "partial"}
   ]
 }

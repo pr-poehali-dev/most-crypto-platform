@@ -419,6 +419,184 @@ function TabDashboard({ stats, loading }: { stats: Stats | null; loading: boolea
   );
 }
 
+// ─── Модалка "Заморозить + Отклонить" ────────────────────────────────────────
+function FreezeRejectModal({ item, onClose, onDone, apiFetch }: {
+  item: QueueItem; onClose: () => void; onDone: () => void;
+  apiFetch: (url: string, opts?: RequestInit) => Promise<Response>;
+}) {
+  const [reason,     setReason]     = useState('');
+  const [rejectAll,  setRejectAll]  = useState(false);
+  const [confirmed,  setConfirmed]  = useState(false);
+  const [loading,    setLoading]    = useState(false);
+  const [err,        setErr]        = useState('');
+  const [result,     setResult]     = useState<{ rejected_count: number; user_email: string } | null>(null);
+
+  const canSubmit = reason.trim().length >= 5 && confirmed;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setLoading(true); setErr('');
+    try {
+      const res = await apiFetch(COMPLIANCE_API, {
+        method: 'POST',
+        body: JSON.stringify({
+          resource:   'freeze_and_reject',
+          order_id:   item.id,
+          user_id:    item.user_id,
+          reason:     reason.trim(),
+          reject_all: rejectAll,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setResult(data);
+      setTimeout(() => { onClose(); onDone(); }, 2200);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Ошибка сети');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center',
+      justifyContent: 'center', padding: 24,
+      background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)',
+    }} onClick={e => e.target === e.currentTarget && !loading && onClose()}>
+      <div style={{ width: '100%', maxWidth: 520, background: '#14041A', border: `1px solid ${C.danger}44`, borderRadius: 20, overflow: 'hidden', boxShadow: `0 0 60px ${C.danger}22` }}>
+
+        {/* Шапка — красная полоса */}
+        <div style={{ background: `linear-gradient(135deg, ${C.danger}22, rgba(255,68,68,0.05))`, padding: '22px 28px', borderBottom: `1px solid ${C.danger}33`, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: `${C.danger}20`, border: `1px solid ${C.danger}55`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <Icon name="ShieldOff" size={22} style={{ color: C.danger }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 17, fontWeight: 700, color: C.danger }}>
+              Инцидент: Заморозить и Отклонить
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+              Атомарная операция — аккаунт заморожен + платёж отклонён
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4 }}>
+            <Icon name="X" size={18} />
+          </button>
+        </div>
+
+        <div style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Цель */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4, letterSpacing: '0.1em' }}>КОМПАНИЯ</div>
+              <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.user_company || '—'}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.user_email}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4, letterSpacing: '0.1em' }}>ПЛАТЁЖ</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{fmtMoney(item.amount)} {item.from_currency}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>→ {item.to_currency} {item.destination_country ? `· ${item.destination_country}` : ''}</div>
+            </div>
+          </div>
+
+          {/* Адрес + риск */}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', borderRadius: 10, background: `${riskColor(item.risk_score)}0a`, border: `1px solid ${riskColor(item.risk_score)}33` }}>
+            <div style={{ width: 42, height: 42, borderRadius: '50%', flexShrink: 0, background: `${riskColor(item.risk_score)}18`, border: `2px solid ${riskColor(item.risk_score)}`, display: 'grid', placeItems: 'center', fontFamily: 'JetBrains Mono, monospace', fontSize: 14, fontWeight: 700, color: riskColor(item.risk_score) }}>
+              {item.risk_score}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {item.destination_address}
+              </div>
+              <div style={{ fontSize: 11, color: riskColor(item.risk_score), marginTop: 2 }}>
+                {item.risk_level === 'high' ? 'Высокий риск' : 'Средний риск'} · {item.risk_score}/100
+              </div>
+            </div>
+          </div>
+
+          {/* Что будет сделано */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: 2 }}>БУДЕТ ВЫПОЛНЕНО</div>
+            {[
+              { icon: 'Lock',      color: C.danger, text: `Аккаунт ${item.user_company || item.user_email} будет заморожен` },
+              { icon: 'XCircle',   color: C.danger, text: `Платёж #${item.id.slice(0, 8)} будет отклонён` },
+              { icon: 'FileText',  color: C.dim,    text: 'Запись в audit_log с полным контекстом инцидента' },
+            ].map((a, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                <Icon name={a.icon} size={13} style={{ color: a.color, flexShrink: 0 }} />
+                <span style={{ color: a.color === C.dim ? 'rgba(255,255,255,0.45)' : C.text }}>{a.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Опция: отклонить все */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}` }}>
+            <input type="checkbox" checked={rejectAll} onChange={e => setRejectAll(e.target.checked)} style={{ marginTop: 2, accentColor: C.danger }} />
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+              Также отклонить <strong style={{ color: C.text }}>все остальные</strong> платежи этого пользователя со статусом «на проверке»
+            </span>
+          </label>
+
+          {/* Причина */}
+          <div>
+            <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>
+              Причина (для audit_log и клиента) *
+            </label>
+            <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
+              placeholder="Например: подозрение на обход санкций, адрес связан с mixer-сервисом..."
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,0.05)', border: `1px solid ${reason.length >= 5 ? C.danger + '55' : C.border}`, color: C.text, resize: 'none', outline: 'none', fontFamily: "'Rubik', sans-serif", boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>{reason.length}/500 · минимум 5 символов</div>
+          </div>
+
+          {/* Подтверждение */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', padding: '12px 14px', borderRadius: 10, background: `${C.danger}08`, border: `1px solid ${C.danger}33` }}>
+            <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} style={{ marginTop: 2, accentColor: C.danger }} />
+            <span style={{ fontSize: 12, color: '#ff9999', lineHeight: 1.5 }}>
+              Подтверждаю принятие решения об инциденте. Действие будет записано в audit_log с моими данными и IP-адресом.
+            </span>
+          </label>
+
+          {err && (
+            <div style={{ padding: '10px 14px', borderRadius: 10, background: `${C.danger}0d`, border: `1px solid ${C.danger}33`, color: '#ff8888', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="AlertTriangle" size={14} style={{ flexShrink: 0 }} /> {err}
+            </div>
+          )}
+
+          {/* Кнопка */}
+          {!result ? (
+            <button onClick={submit} disabled={!canSubmit || loading} style={{
+              padding: '14px', borderRadius: 12, fontWeight: 700, fontSize: 15, border: 'none',
+              cursor: (!canSubmit || loading) ? 'not-allowed' : 'pointer',
+              background: canSubmit ? `linear-gradient(135deg, ${C.danger}, #cc2222)` : 'rgba(255,255,255,0.07)',
+              color: canSubmit ? '#fff' : 'rgba(255,255,255,0.3)',
+              boxShadow: canSubmit ? `0 4px 24px ${C.danger}44` : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              transition: 'all 0.2s', opacity: loading ? 0.8 : 1,
+            }}>
+              {loading
+                ? <><Icon name="Loader" size={16} style={{ animation: 'spin 1s linear infinite' }} /> Выполняем операцию...</>
+                : <><Icon name="ShieldOff" size={17} /> Заморозить аккаунт и отклонить платёж</>}
+            </button>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '12px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
+                <Icon name="CheckCircle2" size={28} style={{ color: C.accent }} />
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 17, fontWeight: 700 }}>Инцидент закрыт</div>
+              </div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                Аккаунт <strong style={{ color: C.text }}>{result.user_email}</strong> заморожен.<br />
+                Отклонено платежей: <strong style={{ color: C.danger }}>{result.rejected_count}</strong>.<br />
+                Запись в audit_log создана.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Tab: Очередь проверки ────────────────────────────────────────────────────
 function TabQueue({ apiFetch, statsRefresh }: { apiFetch: (url: string, opts?: RequestInit) => Promise<Response>; statsRefresh: () => void }) {
   const [items,    setItems]    = useState<QueueItem[]>([]);
@@ -427,7 +605,8 @@ function TabQueue({ apiFetch, statsRefresh }: { apiFetch: (url: string, opts?: R
   const [err,      setErr]      = useState('');
   const [sortBy,   setSortBy]   = useState('risk_score');
   const [order,    setOrder]    = useState('desc');
-  const [selected, setSelected] = useState<QueueItem | null>(null);
+  const [selected,  setSelected]  = useState<QueueItem | null>(null);
+  const [freezing,  setFreezing]  = useState<QueueItem | null>(null);
 
   const fetch = useCallback(async () => {
     setLoading(true); setErr('');
@@ -443,12 +622,15 @@ function TabQueue({ apiFetch, statsRefresh }: { apiFetch: (url: string, opts?: R
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const cols = '120px 1fr 110px 100px 160px 80px 180px';
+  const cols = '120px 1fr 110px 100px 140px 80px 200px';
 
   return (
     <div>
       {selected && (
         <ApproveModal item={selected} onClose={() => setSelected(null)} onDone={() => { setSelected(null); fetch(); statsRefresh(); }} apiFetch={apiFetch} />
+      )}
+      {freezing && (
+        <FreezeRejectModal item={freezing} onClose={() => setFreezing(null)} onDone={() => { setFreezing(null); fetch(); statsRefresh(); }} apiFetch={apiFetch} />
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
@@ -504,9 +686,24 @@ function TabQueue({ apiFetch, statsRefresh }: { apiFetch: (url: string, opts?: R
             </span>
             <span style={{ fontSize: 12, color: C.dim }}>{item.from_currency} → {item.to_currency} {item.destination_country ? `· ${item.destination_country}` : ''}</span>
             <RiskBadge score={item.risk_score} />
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 5 }}>
               <button onClick={() => setSelected(item)} style={{ flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 11, fontWeight: 700, border: 'none', background: `${C.accent}18`, color: C.accent, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                <Icon name="CheckCircle2" size={13} /> Решить
+                <Icon name="CheckCircle2" size={12} /> Решить
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setFreezing(item); }}
+                title="Заморозить аккаунт и отклонить платёж"
+                style={{
+                  padding: '7px 9px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                  border: `1px solid ${item.risk_score >= 60 ? C.danger + '66' : C.border}`,
+                  background: item.risk_score >= 60 ? `${C.danger}18` : 'rgba(255,255,255,0.04)',
+                  color: item.risk_score >= 60 ? C.danger : 'rgba(255,255,255,0.4)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                  flexShrink: 0, transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = `${C.danger}25`; e.currentTarget.style.color = C.danger; e.currentTarget.style.borderColor = `${C.danger}88`; }}
+                onMouseLeave={e => { e.currentTarget.style.background = item.risk_score >= 60 ? `${C.danger}18` : 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = item.risk_score >= 60 ? C.danger : 'rgba(255,255,255,0.4)'; e.currentTarget.style.borderColor = item.risk_score >= 60 ? C.danger + '66' : C.border; }}>
+                <Icon name="ShieldOff" size={12} />
               </button>
             </div>
           </div>
