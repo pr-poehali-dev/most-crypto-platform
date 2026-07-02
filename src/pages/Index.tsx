@@ -760,8 +760,8 @@ export default function Index() {
               { label: 'О платформе',  href: '/about'    },
               { label: 'Как работает', href: '#how'       },
               { label: 'Безопасность', href: '/security'  },
-              { label: 'Тарифы',       href: '/pricing'   },
-              { label: 'Документация', href: '/docs'      },
+              { label: 'Для банков',   href: '/docs'      },
+              { label: 'Контакты',     href: '/contacts'  },
             ].map(l => (
               <a key={l.label} href={l.href} style={{ ...dimText, fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
@@ -1075,12 +1075,12 @@ export default function Index() {
             }}>
               <Icon name="ArrowUpRight" size={18} /> Подключить платформу
             </a>
-            <a href="mailto:sales@most.network" style={{
+            <a href="/contacts" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '14px 32px',
               borderRadius: 12, fontWeight: 600, fontSize: 15, textDecoration: 'none',
             }}>
-              <Icon name="Mail" size={18} /> Написать в sales
+              <Icon name="Mail" size={18} /> Связаться с нами
             </a>
           </div>
         </div>
@@ -1116,16 +1116,14 @@ export default function Index() {
                     { label: 'О платформе',  href: '/about'    },
                     { label: 'Как работает', href: '#how'       },
                     { label: 'Безопасность', href: '/security'  },
-                    { label: 'Тарифы',       href: '/pricing'   },
                   ],
                 },
                 {
                   title: 'Разработчикам',
                   links: [
-                    { label: 'Документация',  href: '/docs'    },
-                    { label: 'API Reference', href: '/api-ref' },
-                    { label: 'SDK',           href: '/sdk'     },
-                    { label: 'Sandbox',       href: '/sandbox' },
+                    { label: 'Подключение банков', href: '/docs'    },
+                    { label: 'API Reference',      href: '/api-ref' },
+                    { label: 'Sandbox',            href: '/sandbox' },
                   ],
                 },
                 {
@@ -1158,11 +1156,7 @@ export default function Index() {
           {/* Нижняя строка */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <span style={{ ...dimText, fontSize: 13 }}>MOST © 2026. Все права защищены.</span>
-            <span style={{
-              fontSize: 11, fontFamily: 'JetBrains Mono, monospace',
-              background: 'rgba(0,255,136,0.08)', border: `1px solid rgba(0,255,136,0.2)`,
-              borderRadius: 6, padding: '4px 12px', ...accentText,
-            }}>Лицензировано в рамках ЭПР ЦБ РФ №258-ФЗ</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>onemost.ru</span>
           </div>
         </div>
       </footer>

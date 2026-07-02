@@ -182,7 +182,7 @@ export default function ApiRef() {
           <div style={{ display: 'inline-block', padding: '3px 12px', borderRadius: 20, background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.2)', fontSize: 11, color: ACCENT, fontFamily: 'JetBrains Mono, monospace', marginBottom: 16 }}>REST API</div>
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 40, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>API Reference</h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 16, lineHeight: 1.7, maxWidth: 600, marginBottom: 24 }}>
-            Base URL: <code style={{ background: 'rgba(255,255,255,0.07)', padding: '2px 8px', borderRadius: 6, fontSize: 14, fontFamily: 'JetBrains Mono, monospace', color: ACCENT }}>https://api.most.network/v1</code>
+            Base URL: <code style={{ background: 'rgba(255,255,255,0.07)', padding: '2px 8px', borderRadius: 6, fontSize: 14, fontFamily: 'JetBrains Mono, monospace', color: ACCENT }}>https://api.onemost.ru/v1</code>
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {[

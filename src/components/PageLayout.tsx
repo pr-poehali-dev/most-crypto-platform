@@ -7,8 +7,8 @@ const NAV_LINKS = [
   { label: 'О платформе',  href: '/about'    },
   { label: 'Как работает', href: '/#how'      },
   { label: 'Безопасность', href: '/security'  },
-  { label: 'Тарифы',       href: '/pricing'   },
-  { label: 'Документация', href: '/docs'      },
+  { label: 'Для банков',   href: '/docs'      },
+  { label: 'Контакты',     href: '/contacts'  },
 ];
 
 const FOOTER_COLS = [
@@ -18,25 +18,23 @@ const FOOTER_COLS = [
       { label: 'О платформе',  href: '/about'    },
       { label: 'Как работает', href: '/#how'      },
       { label: 'Безопасность', href: '/security'  },
-      { label: 'Тарифы',       href: '/pricing'   },
     ],
   },
   {
     title: 'Разработчикам',
     links: [
-      { label: 'Документация',  href: '/docs'     },
-      { label: 'API Reference', href: '/api-ref'  },
-      { label: 'SDK',           href: '/sdk'      },
-      { label: 'Sandbox',       href: '/sandbox'  },
+      { label: 'Подключение банков', href: '/docs'     },
+      { label: 'API Reference',      href: '/api-ref'  },
+      { label: 'Sandbox',            href: '/sandbox'  },
     ],
   },
   {
     title: 'Компания',
     links: [
-      { label: 'Контакты',               href: '/contacts'      },
-      { label: 'Политика KYC/AML',       href: '/kyc-aml'       },
-      { label: 'Условия использования',  href: '/terms'         },
-      { label: 'Пресс-кит',              href: '/press'         },
+      { label: 'Контакты',               href: '/contacts' },
+      { label: 'Политика KYC/AML',       href: '/kyc-aml'  },
+      { label: 'Условия использования',  href: '/terms'    },
+      { label: 'Пресс-кит',              href: '/press'    },
     ],
   },
 ];
@@ -120,9 +118,7 @@ export default function PageLayout({ children, active }: { children: ReactNode; 
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>MOST © 2026. Все права защищены.</span>
-            <span style={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.2)', borderRadius: 6, padding: '4px 12px', color: ACCENT }}>
-              Лицензировано в рамках ЭПР ЦБ РФ №258-ФЗ
-            </span>
+            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>onemost.ru</span>
           </div>
         </div>
       </footer>

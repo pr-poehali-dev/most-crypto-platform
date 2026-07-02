@@ -595,7 +595,7 @@ export default function Register() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginTop: 32, flexWrap: 'wrap' }}>
           {[
             { icon: 'Lock', text: 'Данные зашифрованы' },
-            { icon: 'ShieldCheck', text: 'ЭПР ЦБ РФ №258-ФЗ' },
+            { icon: 'ShieldCheck', text: 'FATF Compliant AML' },
             { icon: 'Eye', text: 'Только для compliance' },
           ].map(t => (
             <div key={t.text} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>

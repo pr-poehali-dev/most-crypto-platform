@@ -6,17 +6,15 @@ const ACCENT = '#00FF88';
 
 const OFFICES = [
   { city: 'Москва', role: 'Штаб-квартира', address: 'Пресненская наб., 6с2, Москва Сити', flag: '🇷🇺', phone: '+7 495 123-45-67', hours: 'Пн–Пт 9:00–19:00' },
-  { city: 'Дубай',  role: 'Middle East Hub', address: 'DIFC Gate Building, Dubai', flag: '🇦🇪', phone: '+971 4 123 4567', hours: 'Sun–Thu 9:00–18:00' },
-  { city: 'Гонконг', role: 'Asia-Pacific', address: 'Two IFC, 8 Finance St, Central', flag: '🇭🇰', phone: '+852 3 123 4567', hours: 'Mon–Fri 9:00–18:00' },
 ];
 
 const CONTACTS = [
-  { icon: 'Mail',      label: 'Общие вопросы',   value: 'hello@most.network',      href: 'mailto:hello@most.network' },
-  { icon: 'Headphones', label: 'Поддержка',       value: 'support@most.network',    href: 'mailto:support@most.network' },
-  { icon: 'Briefcase', label: 'Продажи',          value: 'sales@most.network',      href: 'mailto:sales@most.network' },
-  { icon: 'Bug',       label: 'Безопасность',     value: 'security@most.network',   href: 'mailto:security@most.network' },
-  { icon: 'Newspaper', label: 'Пресса',           value: 'press@most.network',      href: 'mailto:press@most.network' },
-  { icon: 'Scale',     label: 'Compliance/Legal', value: 'compliance@most.network', href: 'mailto:compliance@most.network' },
+  { icon: 'Mail',       label: 'Общие вопросы',   value: 'hello@onemost.ru',      href: 'mailto:hello@onemost.ru' },
+  { icon: 'Headphones', label: 'Поддержка',        value: 'support@onemost.ru',    href: 'mailto:support@onemost.ru' },
+  { icon: 'Briefcase',  label: 'Продажи',          value: 'sales@onemost.ru',      href: 'mailto:sales@onemost.ru' },
+  { icon: 'Bug',        label: 'Безопасность',     value: 'security@onemost.ru',   href: 'mailto:security@onemost.ru' },
+  { icon: 'Newspaper',  label: 'Пресса',           value: 'press@onemost.ru',      href: 'mailto:press@onemost.ru' },
+  { icon: 'Scale',      label: 'Compliance/Legal', value: 'compliance@onemost.ru', href: 'mailto:compliance@onemost.ru' },
 ];
 
 export default function Contacts() {
@@ -148,7 +146,7 @@ export default function Contacts() {
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Telegram-поддержка</div>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)' }}>Для быстрых вопросов — напишите нам в Telegram. Ответ за 30 минут в рабочее время.</div>
           </div>
-          <a href="https://t.me/most_support" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 22px', borderRadius: 10, background: '#0088CC', color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none', flexShrink: 0 }}>
+          <a href="https://t.me/onemost_ru" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 22px', borderRadius: 10, background: '#0088CC', color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none', flexShrink: 0 }}>
             Написать в Telegram
           </a>
         </div>

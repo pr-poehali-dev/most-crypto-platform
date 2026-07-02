@@ -76,8 +76,8 @@ export default function Terms() {
         <div style={{ marginTop: 32, padding: '20px 24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, display: 'flex', gap: 16, alignItems: 'center' }}>
           <Icon name="Mail" size={18} style={{ color: ACCENT, flexShrink: 0 }} />
           <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
-            Вопросы по условиям использования: <a href="mailto:legal@most.network" style={{ color: ACCENT, textDecoration: 'none' }}>legal@most.network</a><br />
-            MOST Network LLC · ИНН 9999999999 · 123456, г. Москва, Пресненская наб. 6с2
+            Вопросы по условиям использования: <a href="mailto:legal@onemost.ru" style={{ color: ACCENT, textDecoration: 'none' }}>legal@onemost.ru</a><br />
+            MOST Network LLC · г. Москва, Пресненская наб. 6с2
           </div>
         </div>
       </div>

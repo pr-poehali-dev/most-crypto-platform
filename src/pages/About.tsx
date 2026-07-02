@@ -13,7 +13,7 @@ const TEAM = [
 const TIMELINE = [
   { year: '2022', title: 'Основание', desc: 'Александр и Михаил встретились в Y Combinator. Первый прототип Swarm Router за 48 часов хакатона.' },
   { year: '2023', title: 'Seed раунд', desc: '$4.5M от Andreessen Horowitz и Sequoia Capital. Набрана команда из 15 инженеров.' },
-  { year: '2024', title: 'Лицензия ЦБ РФ', desc: 'Получена лицензия в рамках Экспериментального правового режима №258-ФЗ. Первые 50 клиентов.' },
+  { year: '2024', title: 'Запуск платформы', desc: 'Первые 50 корпоративных клиентов. Начало работы в 10 блокчейн-сетях.' },
   { year: '2025', title: 'Series A', desc: '$28M. Запуск в 20 блокчейн-сетях. 1 000+ корпоративных клиентов. Объём платежей $2B.' },
   { year: '2026', title: 'Сегодня', desc: 'Расширение в Азиатско-Тихоокеанский регион. Запуск продукта для банков. $147M объём за 24 часа.' },
 ];
@@ -115,7 +115,7 @@ export default function About() {
         <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20 }}>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.15em', fontFamily: 'JetBrains Mono, monospace', marginBottom: 20 }}>ПОДДЕРЖИВАЮТ</div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 36, flexWrap: 'wrap' }}>
-            {['Andreessen Horowitz', 'Sequoia Capital', 'Coinbase Ventures', 'ЦБ РФ (ЭПР)'].map(inv => (
+            {['Andreessen Horowitz', 'Sequoia Capital', 'Coinbase Ventures'].map(inv => (
               <span key={inv} style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: "'Space Grotesk', sans-serif" }}>{inv}</span>
             ))}
           </div>

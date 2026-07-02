@@ -15,11 +15,11 @@ const FACTS = [
   '$2B+ обработано транзакций',
   '1,247 корпоративных клиентов',
   '20+ поддерживаемых блокчейн-сетей',
-  'Лицензия ЦБ РФ (ЭПР №258-ФЗ)',
+  'FATF Compliant · GDPR · ISO 27001',
   'Поддержка a16z и Sequoia',
   '12 секунд — средняя скорость доставки',
   'Команда из 80+ специалистов',
-  'Офисы в Москве, Дубае, Гонконге',
+  'Офис в Москве, Пресненская наб. 6с2',
 ];
 
 export default function Press() {
@@ -34,8 +34,8 @@ export default function Press() {
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 16, maxWidth: 500, margin: '0 auto 24px' }}>
             Все материалы для публикаций, брифинги и пресс-контакт.
           </p>
-          <a href="mailto:press@most.network" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 11, background: ACCENT, color: '#0A0A1A', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-            <Icon name="Mail" size={15} /> press@most.network
+          <a href="mailto:press@onemost.ru" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 11, background: ACCENT, color: '#0A0A1A', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            <Icon name="Mail" size={15} /> press@onemost.ru
           </a>
         </div>
 
@@ -111,10 +111,10 @@ export default function Press() {
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)' }}>Татьяна Морозова, Head of PR · Ответ на запросы в течение 2 часов в рабочее время</div>
           </div>
           <div style={{ display: 'flex', flex: 'column', gap: 10, flexDirection: 'column' }}>
-            <a href="mailto:press@most.network" style={{ padding: '10px 20px', borderRadius: 9, background: ACCENT, color: '#0A0A1A', fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-              <Icon name="Mail" size={13} /> press@most.network
+            <a href="mailto:press@onemost.ru" style={{ padding: '10px 20px', borderRadius: 9, background: ACCENT, color: '#0A0A1A', fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+              <Icon name="Mail" size={13} /> press@onemost.ru
             </a>
-            <a href="https://t.me/most_press" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+            <a href="https://t.me/onemost_ru" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
               <Icon name="MessageCircle" size={13} /> Telegram
             </a>
           </div>

@@ -85,7 +85,7 @@ export default function KycAml() {
             <Li>Запрос правоохранительных органов</Li>
             <Li>Выявление некорректных данных при KYC-верификации</Li>
           </ul>
-          <P>В случае заморозки клиент уведомляется по email. Для разблокировки необходимо обратиться на compliance@most.network.</P>
+          <P>В случае заморозки клиент уведомляется по email. Для разблокировки необходимо обратиться на compliance@onemost.ru.</P>
         </Section>
 
         <Section title="6. Обязанности клиентов">
@@ -104,7 +104,7 @@ export default function KycAml() {
         <div style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, display: 'flex', gap: 16, alignItems: 'center' }}>
           <Icon name="FileText" size={20} style={{ color: ACCENT, flexShrink: 0 }} />
           <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-            По вопросам KYC/AML обращайтесь: <a href="mailto:compliance@most.network" style={{ color: ACCENT, textDecoration: 'none' }}>compliance@most.network</a>
+            По вопросам KYC/AML обращайтесь: <a href="mailto:compliance@onemost.ru" style={{ color: ACCENT, textDecoration: 'none' }}>compliance@onemost.ru</a>
           </div>
         </div>
       </div>

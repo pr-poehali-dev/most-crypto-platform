@@ -29,18 +29,17 @@ const PILLARS = [
     icon: 'Building',
     title: 'Регуляторное соответствие',
     color: '#A855F7',
-    desc: 'MOST работает в рамках Экспериментального правового режима ЦБ РФ №258-ФЗ. Регулятор имеет полный доступ к данным маршрутизации через выделенный портал.',
-    points: ['Лицензия ЦБ РФ (ЭПР №258-ФЗ)', 'Полная прозрачность для регулятора', 'Регуляторный портал с real-time данными', 'Ежеквартальная отчётность'],
+    desc: 'MOST обеспечивает полную прозрачность для уполномоченных органов. Регулятор имеет доступ к данным маршрутизации через выделенный портал.',
+    points: ['Соответствие требованиям FATF', 'Полная прозрачность для регулятора', 'Регуляторный портал с real-time данными', 'Ежеквартальная отчётность'],
   },
 ];
 
 const CERTS = [
-  { name: 'ISO 27001',        desc: 'Информационная безопасность',   color: '#4D9FFF'  },
-  { name: 'SOC 2 Type II',    desc: 'Операционный аудит',             color: ACCENT     },
-  { name: 'FATF Compliant',   desc: 'Стандарты AML',                  color: '#FFAA00'  },
-  { name: 'GDPR',             desc: 'Защита персональных данных',      color: '#A855F7'  },
-  { name: 'PCI DSS',          desc: 'Платёжные данные',               color: '#FF6B35'  },
-  { name: 'ЦБ РФ ЭПР',        desc: '№258-ФЗ',                       color: '#FF4444'  },
+  { name: 'ISO 27001',      desc: 'Информационная безопасность',  color: '#4D9FFF' },
+  { name: 'SOC 2 Type II',  desc: 'Операционный аудит',            color: ACCENT    },
+  { name: 'FATF Compliant', desc: 'Стандарты AML/CFT',             color: '#FFAA00' },
+  { name: 'GDPR',           desc: 'Защита персональных данных',    color: '#A855F7' },
+  { name: 'PCI DSS',        desc: 'Платёжные данные',              color: '#FF6B35' },
 ];
 
 const INCIDENT_RESPONSE = [
@@ -130,8 +129,8 @@ export default function Security() {
           <p style={{ color: 'rgba(255,255,255,0.55)', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.6 }}>
             У нас есть программа Bug Bounty. Сообщите об уязвимости — мы вознаградим вас за ответственное раскрытие.
           </p>
-          <a href="mailto:security@most.network" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: ACCENT, color: '#0A0A1A', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-            <Icon name="Mail" size={15} /> security@most.network
+          <a href="mailto:security@onemost.ru" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: ACCENT, color: '#0A0A1A', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            <Icon name="Mail" size={15} /> security@onemost.ru
           </a>
         </div>
       </div>
