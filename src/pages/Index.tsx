@@ -848,20 +848,6 @@ export default function Index() {
             {/* Счётчики */}
             <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
               <div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, ...accentText }}>
-                  $<Counter end={2.4} decimals={1} />B
-                </div>
-                <div style={{ fontSize: 12, ...dimText, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>ПРОВЕДЕНО</div>
-              </div>
-              <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.1)' }} />
-              <div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: '#fff' }}>
-                  <Counter end={18.5} decimals={1} />M
-                </div>
-                <div style={{ fontSize: 12, ...dimText, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>ТРАНЗАКЦИЙ</div>
-              </div>
-              <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.1)' }} />
-              <div>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: '#fff' }}>
                   20+
                 </div>
