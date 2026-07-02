@@ -429,7 +429,7 @@ function FreezeRejectModal({ item, onClose, onDone, apiFetch }: {
   const [confirmed,  setConfirmed]  = useState(false);
   const [loading,    setLoading]    = useState(false);
   const [err,        setErr]        = useState('');
-  const [result,     setResult]     = useState<{ rejected_count: number; user_email: string } | null>(null);
+  const [result,     setResult]     = useState<{ rejected_count: number; user_email: string; email_sent: boolean } | null>(null);
 
   const canSubmit = reason.trim().length >= 5 && confirmed;
 
@@ -579,16 +579,36 @@ function FreezeRejectModal({ item, onClose, onDone, apiFetch }: {
                 : <><Icon name="ShieldOff" size={17} /> Заморозить аккаунт и отклонить платёж</>}
             </button>
           ) : (
-            <div style={{ textAlign: 'center', padding: '12px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-                <Icon name="CheckCircle2" size={28} style={{ color: C.accent }} />
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 17, fontWeight: 700 }}>Инцидент закрыт</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Статус */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderRadius: 12, background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)' }}>
+                <Icon name="CheckCircle2" size={26} style={{ color: C.accent, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, marginBottom: 1 }}>Инцидент закрыт</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Все действия выполнены атомарно</div>
+                </div>
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-                Аккаунт <strong style={{ color: C.text }}>{result.user_email}</strong> заморожен.<br />
-                Отклонено платежей: <strong style={{ color: C.danger }}>{result.rejected_count}</strong>.<br />
-                Запись в audit_log создана.
+              {/* Чеклист */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, padding: '12px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)' }}>
+                {([
+                  { icon: 'Lock',     color: C.danger, text: `Аккаунт ${result.user_email} заморожен` },
+                  { icon: 'XCircle',  color: C.danger, text: `Отклонено платежей: ${result.rejected_count}` },
+                  { icon: 'FileText', color: C.dim,    text: 'Запись в audit_log создана' },
+                  result.email_sent
+                    ? { icon: 'Mail',  color: C.accent, text: `Уведомление отправлено на ${result.user_email}` }
+                    : { icon: 'MailX', color: C.warn,   text: 'Email не отправлен — SMTP_URL не настроен' },
+                ] as { icon: string; color: string; text: string }[]).map((row, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
+                    <Icon name={row.icon} size={13} style={{ color: row.color, flexShrink: 0 }} />
+                    <span style={{ color: row.color === C.dim ? 'rgba(255,255,255,0.45)' : '#fff' }}>{row.text}</span>
+                  </div>
+                ))}
               </div>
+              {!result.email_sent && (
+                <div style={{ fontSize: 12, color: 'rgba(255,170,0,0.85)', padding: '9px 13px', borderRadius: 8, background: 'rgba(255,170,0,0.06)', border: '1px solid rgba(255,170,0,0.2)' }}>
+                  Добавьте секрет <strong>SMTP_URL</strong> в настройках проекта, чтобы клиенты получали уведомления о заморозке.
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -11,11 +11,175 @@ POST / { resource: "freeze"|"unfreeze"|"escalate", user_id, reason }
 """
 import json
 import os
+import smtplib
+import ssl
+import urllib.parse
 from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import psycopg2
 import psycopg2.extras
 from jose import JWTError, jwt
+
+COMPLIANCE_EMAIL = "compliance@most.network"
+PLATFORM_URL     = os.environ.get("PLATFORM_URL", "https://most.network")
+
+
+# ─── SMTP ─────────────────────────────────────────────────────────────────────
+def _parse_smtp(url: str) -> dict:
+    p = urllib.parse.urlparse(url)
+    return {"host": p.hostname, "port": p.port or 587,
+            "user": urllib.parse.unquote(p.username or ""),
+            "password": urllib.parse.unquote(p.password or "")}
+
+
+def _send_email(to: str, subject: str, html: str, text: str) -> bool:
+    smtp_url = os.environ.get("SMTP_URL", "")
+    if not smtp_url:
+        print(f"[freeze-notify] SMTP_URL не задан — письмо НЕ отправлено (to={to})")
+        return False
+    cfg = _parse_smtp(smtp_url)
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"]    = f"MOST Compliance <{cfg['user']}>"
+    msg["To"]      = to
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html",  "utf-8"))
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP(cfg["host"], cfg["port"]) as s:
+        s.ehlo(); s.starttls(context=ctx)
+        s.login(cfg["user"], cfg["password"])
+        s.sendmail(cfg["user"], [to], msg.as_bytes())
+    print(f"[freeze-notify] ✓ sent to {to}")
+    return True
+
+
+# ─── HTML-шаблон заморозки ─────────────────────────────────────────────────────
+def _build_freeze_email(company: str, reason: str, year: int) -> tuple[str, str]:
+    contact_url   = f"{PLATFORM_URL}/support"
+    compliance_em = COMPLIANCE_EMAIL
+
+    html = f"""<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Аккаунт временно заморожен — MOST</title></head>
+<body style="margin:0;padding:0;background:#0A0A1A;font-family:Arial,sans-serif;color:#fff;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A1A;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0"
+             style="background:#0f0f1f;border:1px solid rgba(255,68,68,0.3);border-radius:16px;overflow:hidden;">
+
+        <!-- Header -->
+        <tr><td style="background:linear-gradient(135deg,rgba(255,68,68,0.10),rgba(255,68,68,0.04));
+                       padding:32px 40px;border-bottom:1px solid rgba(255,68,68,0.15);">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td>
+              <div style="display:inline-block;width:38px;height:38px;background:#00FF88;border-radius:9px;
+                          text-align:center;line-height:38px;font-weight:700;font-size:19px;
+                          color:#0A0A1A;vertical-align:middle;">M</div>
+              <span style="font-size:20px;font-weight:700;margin-left:10px;vertical-align:middle;">MOST</span>
+            </td>
+            <td align="right">
+              <span style="background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.35);
+                           border-radius:20px;padding:4px 14px;font-size:11px;color:#FF6666;
+                           letter-spacing:0.1em;font-family:monospace;">АККАУНТ ЗАМОРОЖЕН</span>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td style="padding:40px;">
+
+          <!-- Icon -->
+          <div style="width:68px;height:68px;background:rgba(255,68,68,0.1);border:2px solid #FF4444;
+                      border-radius:50%;margin:0 auto 28px;text-align:center;line-height:64px;font-size:28px;">
+            🔒
+          </div>
+
+          <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;text-align:center;letter-spacing:-0.02em;">
+            Ваш аккаунт временно заморожен
+          </h1>
+
+          <p style="color:rgba(255,255,255,0.6);font-size:15px;line-height:1.7;text-align:center;margin:0 0 28px;">
+            Аккаунт компании <strong style="color:#fff;">{company}</strong>
+            на платформе MOST был временно заморожен командой Compliance.
+          </p>
+
+          <!-- Причина -->
+          <table width="100%" cellpadding="0" cellspacing="0"
+                 style="background:rgba(255,68,68,0.06);border:1px solid rgba(255,68,68,0.2);
+                        border-radius:12px;margin-bottom:28px;">
+            <tr><td style="padding:20px 24px;">
+              <p style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.12em;
+                        margin:0 0 10px;font-family:monospace;">ПРИЧИНА ЗАМОРОЗКИ</p>
+              <p style="font-size:15px;color:rgba(255,255,255,0.9);line-height:1.6;margin:0;">
+                {reason}
+              </p>
+            </td></tr>
+          </table>
+
+          <!-- Что делать -->
+          <table width="100%" cellpadding="0" cellspacing="0"
+                 style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+                        border-radius:12px;margin-bottom:28px;">
+            <tr><td style="padding:20px 24px;">
+              <p style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.12em;
+                        margin:0 0 14px;font-family:monospace;">ДЛЯ РАЗБЛОКИРОВКИ</p>
+              {"".join(f'<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="color:#FFAA00;font-size:14px;line-height:1.4;">→</span><span style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.5;">{s}</span></div>' for s in [
+                f'Напишите на <a href="mailto:{compliance_em}" style="color:#00FF88;">{compliance_em}</a> с темой «Разблокировка аккаунта»',
+                'Укажите ИНН компании и ваш контактный номер телефона',
+                'Compliance-менеджер свяжется с вами в течение 1 рабочего дня',
+              ])}
+            </td></tr>
+          </table>
+
+          <!-- CTA -->
+          <div style="text-align:center;margin-bottom:28px;">
+            <a href="mailto:{compliance_em}?subject=Разблокировка аккаунта {company}"
+               style="display:inline-block;background:#FFAA00;color:#0A0A1A;
+                      padding:13px 36px;border-radius:10px;font-weight:700;font-size:15px;
+                      text-decoration:none;">
+              Написать в Compliance →
+            </a>
+          </div>
+
+          <p style="font-size:12px;color:rgba(255,255,255,0.25);text-align:center;margin:0;">
+            Если вы считаете, что произошла ошибка — также напишите на
+            <a href="mailto:{compliance_em}" style="color:rgba(0,255,136,0.5);">{compliance_em}</a>
+          </p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:18px 40px;border-top:1px solid rgba(255,255,255,0.07);text-align:center;">
+          <p style="font-size:12px;color:rgba(255,255,255,0.2);margin:0 0 4px;">
+            MOST © {year} · Swarm Payment Network
+          </p>
+          <p style="font-size:11px;color:rgba(255,255,255,0.15);margin:0;">
+            Это автоматическое уведомление платформы. Не отвечайте на это письмо.
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
+    text = f"""Ваш аккаунт временно заморожен — MOST
+
+Аккаунт компании {company} на платформе MOST был временно заморожен командой Compliance.
+
+ПРИЧИНА: {reason}
+
+Для разблокировки:
+1. Напишите на {compliance_em} с темой «Разблокировка аккаунта»
+2. Укажите ИНН компании и контактный телефон
+3. Compliance-менеджер свяжется с вами в течение 1 рабочего дня
+
+---
+MOST © {year} · Swarm Payment Network
+"""
+    return html, text
 
 ALLOWED_ROLES = {"compliance", "admin", "superadmin", "finance"}
 CORS = {
@@ -248,6 +412,21 @@ def freeze_and_reject(conn, body: dict, caller: dict, ip) -> tuple:
 
         conn.commit()
         conn.autocommit = True
+
+        # 7. Email-уведомление клиенту (fire-and-forget, не блокируем ответ)
+        email_sent = False
+        try:
+            company = user.get("company_name") or user["email"]
+            html, text = _build_freeze_email(company, reason, now.year)
+            email_sent = _send_email(
+                to      = user["email"],
+                subject = "⚠️ Ваш аккаунт MOST временно заморожен",
+                html    = html,
+                text    = text,
+            )
+        except Exception as mail_exc:
+            print(f"[freeze-notify] email error: {mail_exc}")
+
         return {
             "order_id":       order_id,
             "user_id":        user_id,
@@ -255,6 +434,7 @@ def freeze_and_reject(conn, body: dict, caller: dict, ip) -> tuple:
             "rejected_count": rejected_count,
             "user_status":    "blocked",
             "order_status":   "rejected",
+            "email_sent":     email_sent,
         }, 200
 
     except Exception as exc:
