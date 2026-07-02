@@ -11,7 +11,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Compliance from "./pages/Compliance";
 import Dashboard from "./pages/Dashboard";
-
+import ComplianceOfficer from "./pages/ComplianceOfficer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +37,12 @@ const App = () => (
             <Route path="/compliance" element={
               <ProtectedRoute roles={['compliance', 'admin', 'finance', 'superadmin']}>
                 <Compliance />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/compliance-officer" element={
+              <ProtectedRoute roles={['compliance', 'admin', 'superadmin']}>
+                <ComplianceOfficer />
               </ProtectedRoute>
             } />
 
