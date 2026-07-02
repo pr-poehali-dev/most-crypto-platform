@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Compliance from "./pages/Compliance";
 import Dashboard from "./pages/Dashboard";
 import ComplianceOfficer from "./pages/ComplianceOfficer";
+import RegulatorCabinet from "./pages/RegulatorCabinet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,8 @@ const App = () => (
                 <ComplianceOfficer />
               </ProtectedRoute>
             } />
+
+            <Route path="/regulator" element={<RegulatorCabinet />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

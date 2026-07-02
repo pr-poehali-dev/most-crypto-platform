@@ -1,4 +1,5 @@
 {
+  "regulator-api": "https://functions.poehali.dev/9d967023-b0c6-4778-a536-221013e6149c",
   "payment-create": "https://functions.poehali.dev/de6b941d-2574-4b57-b400-21d01b2b736a",
   "payments-list": "https://functions.poehali.dev/d1c20695-5b08-4f0a-b0c8-4f850b8291a9",
   "auth-login": "https://functions.poehali.dev/038f9a88-6440-49a4-ba7a-c5a0bb4731a6",

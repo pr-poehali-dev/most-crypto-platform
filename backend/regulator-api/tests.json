@@ -1,0 +1,8 @@
+{
+  "tests": [
+    {"name": "OPTIONS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200},
+    {"name": "No key → 401", "method": "GET", "path": "/?resource=overview", "expectedStatus": 401, "bodyMatcher": "partial"},
+    {"name": "Wrong key → 401", "method": "GET", "path": "/?resource=overview",
+     "headers": {"X-API-Key": "wrong-key"}, "expectedStatus": 401, "bodyMatcher": "partial"}
+  ]
+}
