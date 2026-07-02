@@ -800,19 +800,7 @@ export default function Index() {
 
           {/* Текст слева */}
           <div style={{ animation: 'fadeUp 0.7s ease both' }}>
-            {/* Логотип — только зелёное и белое, без фона */}
-            <img
-              src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
-              alt="MOST"
-              style={{
-                height: 'clamp(90px, 11vw, 140px)',
-                width: 'auto',
-                display: 'block',
-                marginBottom: 20,
-                mixBlendMode: 'lighten',
-                filter: 'brightness(1.15) contrast(1.15) saturate(1.1)',
-              }}
-            />
+
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(0,255,136,0.1)', border: `1px solid rgba(0,255,136,0.25)`, borderRadius: 24, padding: '6px 14px', marginBottom: 28 }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT, boxShadow: `0 0 8px ${ACCENT}`, animation: 'pulse 2s infinite' }} />
               <span style={{ fontSize: 11, letterSpacing: '0.18em', ...accentText, fontFamily: 'JetBrains Mono, monospace' }}>
