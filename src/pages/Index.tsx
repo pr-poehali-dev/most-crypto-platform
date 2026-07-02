@@ -753,7 +753,7 @@ export default function Index() {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 52, width: 'auto', objectFit: 'contain', display: 'block', filter: 'brightness(1.4) contrast(1.1)' }} />
+            <img src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png" alt="MOST" style={{ height: 44, width: 'auto', objectFit: 'contain', display: 'block', filter: 'brightness(1.4) contrast(1.1)' }} />
           </a>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             {[
@@ -807,10 +807,13 @@ export default function Index() {
               </span>
             </div>
 
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(32px, 4.5vw, 58px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em', marginBottom: 24 }}>
-              Международные<br />
-              <span style={accentText}>платежи</span><br />
-              без блокировок
+            <img
+              src="https://cdn.poehali.dev/projects/573c75be-a606-4ed0-96a4-1601ddf0b628/bucket/6357c7e8-9711-4d17-a842-e36565661a52.png"
+              alt="MOST"
+              style={{ height: 'clamp(120px, 14vw, 180px)', width: 'auto', objectFit: 'contain', display: 'block', marginBottom: 24, filter: 'brightness(1.3) contrast(1.05)' }}
+            />
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(20px, 2.8vw, 36px)', fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.02em', marginBottom: 24, color: 'rgba(255,255,255,0.75)' }}>
+              Международные <span style={accentText}>платежи</span> без блокировок
             </h1>
 
             <p style={{ fontSize: 17, lineHeight: 1.7, ...dimText, maxWidth: 480, marginBottom: 36 }}>
