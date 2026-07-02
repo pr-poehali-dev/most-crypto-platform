@@ -1,0 +1,8 @@
+{
+  "tests": [
+    {"name": "OPTIONS", "method": "OPTIONS", "path": "/", "expectedStatus": 200},
+    {"name": "No token → 401", "method": "GET", "path": "/?resource=stats", "expectedStatus": 401, "bodyMatcher": "partial"},
+    {"name": "Bad token → 401", "method": "GET", "path": "/?resource=stats",
+     "headers": {"Authorization": "Bearer bad.token"}, "expectedStatus": 401, "bodyMatcher": "partial"}
+  ]
+}

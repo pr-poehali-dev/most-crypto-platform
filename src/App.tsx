@@ -13,6 +13,7 @@ import Compliance from "./pages/Compliance";
 import Dashboard from "./pages/Dashboard";
 import ComplianceOfficer from "./pages/ComplianceOfficer";
 import RegulatorCabinet from "./pages/RegulatorCabinet";
+import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,12 @@ const App = () => (
             } />
 
             <Route path="/regulator" element={<RegulatorCabinet />} />
+
+            <Route path="/admin" element={
+              <ProtectedRoute roles={['superadmin', 'admin', 'finance', 'devops']}>
+                <AdminPanel />
+              </ProtectedRoute>
+            } />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
